@@ -1,4 +1,4 @@
-import menuData from "../../brgr-menu.json";
+import menuData from "./menu-data";
 
 export type MenuItem = {
   id: number;
