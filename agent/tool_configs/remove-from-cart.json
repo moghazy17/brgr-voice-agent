@@ -1,0 +1,22 @@
+{
+  "name": "remove_from_cart",
+  "description": "Remove an item from the cart by its line ID. Get line IDs from view_cart.",
+  "type": "webhook",
+  "method": "POST",
+  "url": "{{BACKEND_URL}}/api/tools/remove-from-cart",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "conversation_id": {
+        "type": "string"
+      },
+      "line_id": {
+        "type": "string"
+      }
+    },
+    "required": [
+      "conversation_id",
+      "line_id"
+    ]
+  }
+}

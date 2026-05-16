@@ -1,0 +1,40 @@
+{
+  "name": "submit_order",
+  "description": "Finalize the order. Only call AFTER confirming the cart contents and total with the customer, and AFTER collecting their name, phone, and delivery address. Returns an order number.",
+  "type": "webhook",
+  "method": "POST",
+  "url": "{{BACKEND_URL}}/api/tools/submit-order",
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "conversation_id": {
+        "type": "string"
+      },
+      "customer_name": {
+        "type": "string"
+      },
+      "phone": {
+        "type": "string",
+        "description": "Egyptian phone, 11 digits starting with 010, 011, 012, or 015"
+      },
+      "address": {
+        "type": "string"
+      },
+      "payment_method": {
+        "type": "string",
+        "enum": [
+          "cash",
+          "card",
+          "online"
+        ],
+        "default": "cash"
+      }
+    },
+    "required": [
+      "conversation_id",
+      "customer_name",
+      "phone",
+      "address"
+    ]
+  }
+}

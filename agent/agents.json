@@ -1,0 +1,9 @@
+{
+  "agents": [
+    {
+      "name": "BRGR Voice",
+      "config_path": "agent_configs/brgr-voice.json",
+      "agent_id": null
+    }
+  ]
+}

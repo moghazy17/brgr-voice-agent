@@ -1,0 +1,51 @@
+{
+  "name": "add_to_cart",
+  "description": "Add an item to the customer's cart. Call this every time the customer agrees to add something. The menu_item_id MUST come from the menu data in the system prompt - never invent IDs.",
+  "type": "webhook",
+  "method": "POST",
+  "url": "{{BACKEND_URL}}/api/tools/add-to-cart",
+  "headers": {
+    "Content-Type": "application/json"
+  },
+  "parameters": {
+    "type": "object",
+    "properties": {
+      "conversation_id": {
+        "type": "string",
+        "description": "The ElevenLabs conversation ID. Use the system-injected {{conversation_id}} variable."
+      },
+      "menu_item_id": {
+        "type": "integer",
+        "description": "The numeric ID from the menu (e.g., 1101001 for Original Single)"
+      },
+      "quantity": {
+        "type": "integer",
+        "minimum": 1,
+        "default": 1
+      },
+      "modifiers": {
+        "type": "object",
+        "description": "Optional modifications. For burgers, may include 'bun' (one of 'Martin's Potato Bun', 'Original Bun', 'Normal'). May include 'add_ons' (array of Extra Dip item IDs).",
+        "properties": {
+          "bun": {
+            "type": "string"
+          },
+          "add_ons": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        }
+      },
+      "notes": {
+        "type": "string",
+        "description": "Free-text kitchen instructions (e.g., 'no pickles', 'well done')"
+      }
+    },
+    "required": [
+      "conversation_id",
+      "menu_item_id"
+    ]
+  }
+}
