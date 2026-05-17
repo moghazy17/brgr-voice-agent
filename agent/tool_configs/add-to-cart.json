@@ -3,7 +3,7 @@
   "description": "Add an item to the customer's cart. Call this every time the customer agrees to add something. The menu_item_id MUST come from the menu data in the system prompt - never invent IDs.",
   "type": "webhook",
   "method": "POST",
-  "url": "{{BACKEND_URL}}/api/tools/add-to-cart",
+  "url": "https://brgr-tools.vercel.app/api/tools/add-to-cart",
   "headers": {
     "Content-Type": "application/json"
   },
@@ -21,20 +21,24 @@
       "quantity": {
         "type": "integer",
         "minimum": 1,
-        "default": 1
+        "default": 1,
+        "description": "How many of this item to add. Use 1 if unspecified."
       },
       "modifiers": {
         "type": "object",
         "description": "Optional modifications. For burgers, may include 'bun' (one of 'Martin's Potato Bun', 'Original Bun', 'Normal'). May include 'add_ons' (array of Extra Dip item IDs).",
         "properties": {
           "bun": {
-            "type": "string"
+            "type": "string",
+            "description": "Optional bun choice."
           },
           "add_ons": {
             "type": "array",
             "items": {
-              "type": "integer"
-            }
+              "type": "integer",
+              "description": "Value for add_ons_item."
+            },
+            "description": "Optional array of add-on item IDs from the add-ons list."
           }
         }
       },
@@ -46,6 +50,7 @@
     "required": [
       "conversation_id",
       "menu_item_id"
-    ]
+    ],
+    "description": "Object parameters."
   }
 }

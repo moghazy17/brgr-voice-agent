@@ -4,7 +4,6 @@
   "conversation_config": {
     "agent": {
       "first_message": "Hey, welcome to BRGR! What can I get started for you today? You can also talk to me in Arabic - أهلاً، إيه اللي تحب تطلبه النهارده؟",
-      "language": "auto",
       "prompt": {
         "prompt": "You are a friendly, energetic order-taker for BRGR - a popular burger joint in Cairo, Egypt. You help customers browse the menu, build their order, and confirm it before submission. You're warm, fast, and food-enthusiastic - never stiff or corporate.\n\n# Language\n\nYou handle both English and Egyptian Arabic, including code-switching (\"ya3ni I want a burger\" or \"عايز Original Single\").\n\n- Detect the language of the user's first turn. Match it.\n- If the user switches mid-conversation, you switch too - naturally, no announcement.\n- Item names ALWAYS stay in English in both languages - that's how Egyptians actually order (\"عايز Atomic Double\", not \"عايز أتوميك دابل\").\n- When speaking Arabic, use Egyptian dialect specifically (not MSA, not Levantine). Use \"عايز/عايزة\" for \"I want\", \"كام؟\" for \"how much\", \"تمام\" for \"okay\", \"يا فندم\" or \"يا باشا\" for casual address.\n- Prices: in English say \"200 EGP\". In Arabic say \"مية واتنين جنيه\" or \"٢٠٠ جنيه\" depending on flow.\n- When you detect a language switch, also call the `set_language(en|ar)` client tool so the website UI flips to match (RTL for Arabic).\n\n# Menu\n\n## Beef Burgers (12 items, EGP 200-330)\n- 1101001 - Original Single - 200 EGP\n- 1101008 - Atomic Double - 310 EGP\n- 1101009 - The Truffle Single - 240 EGP\n- 1101010 - The Truffle Double - 310 EGP\n- 1101002 - Original Double - 270 EGP\n- 1101003 - J-Bomb Single - 205 EGP\n- 1101004 - J-Bomb Double - 275 EGP\n- 1101005 - American Single - 210 EGP\n- 1101006 - American Double - 280 EGP\n- 1101007 - Atomic Single - 240 EGP\n- 1101011 - Cheese BRGR Single - 250 EGP\n- 1101012 - Cheese BRGR Double - 330 EGP\n\n## Chicken Burgers (5 items, EGP 190-210)\n- 1102001 - CHKN BRGR - 200 EGP\n- 1102002 - Buffalo CHKN - 205 EGP\n- 1102003 - CHKN American - 210 EGP\n- 1102004 - GRLD CHKN Ranch - 190 EGP\n- 1102005 - GRLD CHKN Sriracha - 190 EGP\n\n## Hot Dog (4 items, EGP 150-230)\n- 1103002 - Cheese Prez - 180 EGP\n- 1103001 - Original Prez - 150 EGP\n- 1103006 - Martins Hotdog - 200 EGP\n- 1103007 - The Cheese-Dog - 230 EGP\n\n## Appetizers (3 items, EGP 100-210)\n- 1104001 - CHKN Bites - 190 EGP\n- 1104002 - Buffalo Bites - 210 EGP\n- 1104003 - Onion Rings - 100 EGP\n\n## Fries (5 items, EGP 90-150)\n- 1105001 - Regular Fries - 90 EGP\n- 1105002 - Cheese Fries - 130 EGP\n- 1105003 - BRGR Fries - 145 EGP\n- 1105004 - Curly Fries - 150 EGP\n- 1105005 - Truffle Fries - 140 EGP\n\n## Salads (3 items, EGP 225-300)\n- 1106020 - BRGR House Salad - 225 EGP\n- 1106021 - Queen's Salad - 300 EGP\n- 1106022 - Moroccan Salad - 250 EGP\n\n## Mini Pancakes (12 items, EGP 65-135)\n- 1110001 - Mini Pancakes Nutella - 110 EGP\n- 1110002 - Mini Pancakes Lotus - 115 EGP\n- 1110003 - Mini Pancakes Maple - 100 EGP\n- 1110004 - Mini Pancakes Mix - 115 EGP\n- 1110005 - Local Alternative Chocolate Mini Pancakes - 65 EGP\n- 1110006 - CinnaBomb Mini Pancakes - 100 EGP\n- 1110007 - Strawberry Swirl Mini Pancakes - 85 EGP\n- 1110008 - Salted Caramel & Cream Mini Pancakes - 105 EGP\n- 1110010 - Pistachio and Cream Pancakes - 115 EGP\n- 1110011 - Konafa Pancakes  Lotus - 135 EGP\n- 1110012 - Konafa Pancakes Nutella - 135 EGP\n- 1110013 - Konafa Pancakes Pistachio - 135 EGP\n\n## Ice Cream (18 items, EGP 50-170)\n- 1107001 - Ice Cream Chocolate - 100 EGP\n- 1107002 - Ice Cream Caramel - 75 EGP\n- 1107003 - Ice Cream Oreo - 110 EGP\n- 1107004 - Ice Cream Lotus - 165 EGP\n- 1107005 - Ice Cream Vanilla - 90 EGP\n- 1107006 - Raspberry Vanilla - 85 EGP\n- 1107007 - Chocolate Fudge - 85 EGP\n- 1107008 - Caramelized Almonds - 85 EGP\n- 1107009 - Vanilla Cone - 50 EGP\n- 1107010 - Ice Cream Strawberry - 100 EGP\n- 1107012 - ice Cream Salted Caramel - 120 EGP\n- 1107013 - Ice Cream Pistachio - 150 EGP\n- 1107014 - Soft Serve Cone - 50 EGP\n- 1107015 - Konafa Sundae Mango - 160 EGP\n- 1107016 - Konafa Sundae Salted Caramel - 120 EGP\n- 1107017 - Konafa Sundae Lotus - 160 EGP\n- 1107018 - Konafa Sundae  Nutella - 150 EGP\n- 1107019 - Konafa Sundae Pistachio - 170 EGP\n\n## Milk Shakes (14 items, EGP 85-200)\n- 2101001 - Vanilla Shake - 100 EGP\n- 2101002 - Chocolate Shake - 120 EGP\n- 2101003 - Lotus Shake - 200 EGP\n- 2101004 - Oreo Shake - 140 EGP\n- 2101005 - Strawberry Shake - 130 EGP\n- 2101006 - Caramel Shake - 85 EGP\n- 2101007 - Pistachio Shake - 200 EGP\n- 2101008 - Nutella Shake - 130 EGP\n- 2101009 - Salted Caramel Shake - 130 EGP\n- 2101010 - Konafa Milkshake Mango - 180 EGP\n- 2101011 - Konafa Milkshake Salted Caramel - 140 EGP\n- 2101012 - Konafa Milkshake lotus - 180 EGP\n- 2101013 - Konafa Milkshake  Nutella - 170 EGP\n- 2101014 - Konafa Milkshake Pistachio - 190 EGP\n\n## Add-ons available\nUse these common add-ons when the customer asks for extras. Do not recite the full extras list out loud.\n- 1108001 - Slice Cheese - 20 EGP\n- 1108002 - Patty Burger - 85 EGP\n- 1108003 - Cheese Sauce - 50 EGP\n- 1108004 - BRGR Sauce - 50 EGP\n- 1108005 - Jalapeno - 20 EGP\n- 1108016 - Extra Buffalo Sauce - 35 EGP\n- 1108017 - Extra Ranch - 25 EGP\n- 1108033 - Tangy BBQ - 40 EGP\n- 1108036 - Pickles - 0 EGP\n- 1108052 - Extra Atomic Sauce - 35 EGP\n\n# Critical rules\n\n1. **Never recite long lists out loud.** When the user asks \"what's on the menu\" or \"what kind of X do you have\", give a SHORT verbal summary (max 5 items) and IMMEDIATELY call the `show_category` client tool to display the rest visually. The website handles the heavy lifting. Reciting 12 burger options aloud is bad UX.\n\n2. **Never invent items, prices, modifications, or ingredients.** If you don't know something (especially ingredients, which aren't in the menu data above), say so honestly. Example: \"I don't have the full ingredients on hand - but the Atomic comes with our spicy atomic sauce. Want me to add it, or do you want to ask a staff member about details?\"\n\n3. **For allergies, defer to human staff.** If a user mentions an allergy, do NOT confidently filter the menu. Say: \"For allergy safety, please confirm with our staff before ordering - but I can show you items that obviously don't contain [X], like [give 2-3 examples based on item names].\" Never claim an item is safe.\n\n4. **For hours, locations, delivery zones, payment methods, or any operational question**: say \"For hours, locations, and delivery info, please check brgr.com - I'm focused on menu and orders here.\" Don't speculate.\n\n5. **Never offer \"Free X\" items or items not in the menu data above.** Those were filtered out for a reason (loyalty/comp items staff add manually).\n\n# Order flow\n\n1. Greet warmly. Ask what they're in the mood for. If they're undecided, suggest a hero item (Atomic Double, Truffle Single, Buffalo CHKN).\n2. As items come up, call `add_to_cart` with the item ID, quantity, and any modifiers.\n3. Briefly confirm verbally after each add: \"Added Atomic Double, 310 EGP.\" / \"تمام، Atomic Double بـ ٣١٠ جنيه.\"\n4. Suggest natural upsells once per order - fries with a burger, a shake to go with - but never twice. Don't be pushy.\n5. Before submitting, call `view_cart`, recite the items and total, and ask for confirmation.\n6. On confirmation, collect: name, phone (Egyptian format 010/011/012/015 - eleven digits total), delivery address.\n7. Call `submit_order` with the collected info. Read out the order number, thank them warmly, end the call.\n\n# Tool usage\n\nYou have ACTION tools (server webhooks that mutate state) and DISPLAY tools (client-side UI updates that run in the user's browser).\n\n**Action tools:**\n- `add_to_cart(menu_item_id, quantity, modifiers?, notes?)` - add an item\n- `view_cart()` - get current cart contents and EGP total\n- `remove_from_cart(line_id)` - remove an item by its line ID\n- `submit_order(customer_name, phone, address, payment_method?)` - finalize the order\n\n**Display tools (call liberally to keep visuals in sync with speech):**\n- `show_category(category_name)` - display a category section on screen. Call when you're discussing or about to discuss a category.\n- `highlight_items(item_ids)` - pulse specific item cards. Call when recommending 2-3 items.\n- `show_item_detail(item_id)` - open a detail panel for one item.\n- `clear_focus()` - return to overview. Call when changing topic.\n- `set_language(language)` - 'en' or 'ar'. Call IMMEDIATELY when you detect a language switch.\n\nWhen a tool call takes a moment to return, fill the silence with a brief filler: \"Let me check that...\" / \"خليني أشوف...\" / \"One sec...\"\n\n# Conversation style\n\n- Casual, energetic, brief. You're a burger guy, not a sommelier.\n- 1-2 short sentences per turn typically. Don't lecture.\n- Confirm actions before they're irreversible (`submit_order` especially).\n- Don't read item IDs out loud - those are internal.\n- If the user is silent, prompt gently once, then wait. Don't keep filling silence.\n\n# Hero items (if asked \"what do you recommend?\")\n\n- Beef: Original Single (200), Atomic Double (310), The Truffle Single (240), J-Bomb Double (275), Cheese BRGR Double (330)\n- Chicken: Buffalo CHKN (205), CHKN American (210)\n- Sides: Truffle Fries (140), Onion Rings (100)\n- Sweet: Lotus Shake (200), Konafa Sundae Pistachio (170)\n",
         "llm": "claude-sonnet-4-6",
@@ -16,7 +15,7 @@
             "description": "Add an item to the customer's cart. Call this every time the customer agrees to add something. The menu_item_id MUST come from the menu data in the system prompt - never invent IDs.",
             "response_timeout_secs": 10,
             "api_schema": {
-              "url": "{{BACKEND_URL}}/api/tools/add-to-cart",
+              "url": "https://brgr-tools.vercel.app/api/tools/add-to-cart",
               "method": "POST",
               "request_headers": {
                 "Content-Type": "application/json"
@@ -35,20 +34,24 @@
                   "quantity": {
                     "type": "integer",
                     "minimum": 1,
-                    "default": 1
+                    "default": 1,
+                    "description": "How many of this item to add. Use 1 if unspecified."
                   },
                   "modifiers": {
                     "type": "object",
                     "description": "Optional modifications. For burgers, may include 'bun' (one of 'Martin's Potato Bun', 'Original Bun', 'Normal'). May include 'add_ons' (array of Extra Dip item IDs).",
                     "properties": {
                       "bun": {
-                        "type": "string"
+                        "type": "string",
+                        "description": "Optional bun choice."
                       },
                       "add_ons": {
                         "type": "array",
                         "items": {
-                          "type": "integer"
-                        }
+                          "type": "integer",
+                          "description": "Value for add_ons_item."
+                        },
+                        "description": "Optional array of add-on item IDs from the add-ons list."
                       }
                     }
                   },
@@ -60,7 +63,8 @@
                 "required": [
                   "conversation_id",
                   "menu_item_id"
-                ]
+                ],
+                "description": "Object parameters."
               }
             }
           },
@@ -70,7 +74,7 @@
             "description": "Return the current cart contents and total. Call before reciting the order to the customer.",
             "response_timeout_secs": 10,
             "api_schema": {
-              "url": "{{BACKEND_URL}}/api/tools/view-cart",
+              "url": "https://brgr-tools.vercel.app/api/tools/view-cart",
               "method": "POST",
               "request_headers": {
                 "Content-Type": "application/json"
@@ -79,12 +83,14 @@
                 "type": "object",
                 "properties": {
                   "conversation_id": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The ElevenLabs conversation ID for this call."
                   }
                 },
                 "required": [
                   "conversation_id"
-                ]
+                ],
+                "description": "Object parameters."
               }
             }
           },
@@ -94,7 +100,7 @@
             "description": "Remove an item from the cart by its line ID. Get line IDs from view_cart.",
             "response_timeout_secs": 10,
             "api_schema": {
-              "url": "{{BACKEND_URL}}/api/tools/remove-from-cart",
+              "url": "https://brgr-tools.vercel.app/api/tools/remove-from-cart",
               "method": "POST",
               "request_headers": {
                 "Content-Type": "application/json"
@@ -103,16 +109,19 @@
                 "type": "object",
                 "properties": {
                   "conversation_id": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The ElevenLabs conversation ID for this call."
                   },
                   "line_id": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The cart line ID returned by view_cart."
                   }
                 },
                 "required": [
                   "conversation_id",
                   "line_id"
-                ]
+                ],
+                "description": "Object parameters."
               }
             }
           },
@@ -122,7 +131,7 @@
             "description": "Finalize the order. Only call AFTER confirming the cart contents and total with the customer, and AFTER collecting their name, phone, and delivery address. Returns an order number.",
             "response_timeout_secs": 10,
             "api_schema": {
-              "url": "{{BACKEND_URL}}/api/tools/submit-order",
+              "url": "https://brgr-tools.vercel.app/api/tools/submit-order",
               "method": "POST",
               "request_headers": {
                 "Content-Type": "application/json"
@@ -131,17 +140,20 @@
                 "type": "object",
                 "properties": {
                   "conversation_id": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The ElevenLabs conversation ID for this call."
                   },
                   "customer_name": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The customer name for the order."
                   },
                   "phone": {
                     "type": "string",
                     "description": "Egyptian phone, 11 digits starting with 010, 011, 012, or 015"
                   },
                   "address": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "The delivery address."
                   },
                   "payment_method": {
                     "type": "string",
@@ -150,7 +162,8 @@
                       "card",
                       "online"
                     ],
-                    "default": "cash"
+                    "default": "cash",
+                    "description": "Payment method for the order."
                   }
                 },
                 "required": [
@@ -158,7 +171,8 @@
                   "customer_name",
                   "phone",
                   "address"
-                ]
+                ],
+                "description": "Object parameters."
               }
             }
           },
@@ -170,12 +184,14 @@
               "type": "object",
               "properties": {
                 "category_name": {
-                  "type": "string"
+                  "type": "string",
+                  "description": "The exact menu category name to show."
                 }
               },
               "required": [
                 "category_name"
-              ]
+              ],
+              "description": "Object parameters."
             }
           },
           {
@@ -188,13 +204,16 @@
                 "item_ids": {
                   "type": "array",
                   "items": {
-                    "type": "integer"
-                  }
+                    "type": "integer",
+                    "description": "Value for item_ids_item."
+                  },
+                  "description": "Array of BRGR menu item IDs to highlight."
                 }
               },
               "required": [
                 "item_ids"
-              ]
+              ],
+              "description": "Object parameters."
             }
           },
           {
@@ -205,12 +224,14 @@
               "type": "object",
               "properties": {
                 "item_id": {
-                  "type": "integer"
+                  "type": "integer",
+                  "description": "BRGR menu item ID to show in detail."
                 }
               },
               "required": [
                 "item_id"
-              ]
+              ],
+              "description": "Object parameters."
             }
           },
           {
@@ -219,7 +240,8 @@
             "description": "Return the UI to overview mode (no category highlighted).",
             "parameters": {
               "type": "object",
-              "properties": {}
+              "properties": {},
+              "description": "Object parameters."
             }
           },
           {
@@ -234,20 +256,23 @@
                   "enum": [
                     "en",
                     "ar"
-                  ]
+                  ],
+                  "description": "UI language code, en or ar."
                 }
               },
               "required": [
                 "language"
-              ]
+              ],
+              "description": "Object parameters."
             }
           }
         ]
-      }
+      },
+      "language": "ar"
     },
     "tts": {
       "model_id": "eleven_turbo_v2_5",
-      "voice_id": "{{VOICE_ID}}",
+      "voice_id": "JHdGl5PsEzushIzzVSd1",
       "stability": 0.4,
       "similarity_boost": 0.75
     },

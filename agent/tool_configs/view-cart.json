@@ -3,16 +3,18 @@
   "description": "Return the current cart contents and total. Call before reciting the order to the customer.",
   "type": "webhook",
   "method": "POST",
-  "url": "{{BACKEND_URL}}/api/tools/view-cart",
+  "url": "https://brgr-tools.vercel.app/api/tools/view-cart",
   "parameters": {
     "type": "object",
     "properties": {
       "conversation_id": {
-        "type": "string"
+        "type": "string",
+        "description": "The ElevenLabs conversation ID for this call."
       }
     },
     "required": [
       "conversation_id"
-    ]
+    ],
+    "description": "Object parameters."
   }
 }

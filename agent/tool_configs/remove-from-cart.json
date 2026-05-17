@@ -3,20 +3,23 @@
   "description": "Remove an item from the cart by its line ID. Get line IDs from view_cart.",
   "type": "webhook",
   "method": "POST",
-  "url": "{{BACKEND_URL}}/api/tools/remove-from-cart",
+  "url": "https://brgr-tools.vercel.app/api/tools/remove-from-cart",
   "parameters": {
     "type": "object",
     "properties": {
       "conversation_id": {
-        "type": "string"
+        "type": "string",
+        "description": "The ElevenLabs conversation ID for this call."
       },
       "line_id": {
-        "type": "string"
+        "type": "string",
+        "description": "The cart line ID returned by view_cart."
       }
     },
     "required": [
       "conversation_id",
       "line_id"
-    ]
+    ],
+    "description": "Object parameters."
   }
 }

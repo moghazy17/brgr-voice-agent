@@ -3,22 +3,25 @@
   "description": "Finalize the order. Only call AFTER confirming the cart contents and total with the customer, and AFTER collecting their name, phone, and delivery address. Returns an order number.",
   "type": "webhook",
   "method": "POST",
-  "url": "{{BACKEND_URL}}/api/tools/submit-order",
+  "url": "https://brgr-tools.vercel.app/api/tools/submit-order",
   "parameters": {
     "type": "object",
     "properties": {
       "conversation_id": {
-        "type": "string"
+        "type": "string",
+        "description": "The ElevenLabs conversation ID for this call."
       },
       "customer_name": {
-        "type": "string"
+        "type": "string",
+        "description": "The customer name for the order."
       },
       "phone": {
         "type": "string",
         "description": "Egyptian phone, 11 digits starting with 010, 011, 012, or 015"
       },
       "address": {
-        "type": "string"
+        "type": "string",
+        "description": "The delivery address."
       },
       "payment_method": {
         "type": "string",
@@ -27,7 +30,8 @@
           "card",
           "online"
         ],
-        "default": "cash"
+        "default": "cash",
+        "description": "Payment method for the order."
       }
     },
     "required": [
@@ -35,6 +39,7 @@
       "customer_name",
       "phone",
       "address"
-    ]
+    ],
+    "description": "Object parameters."
   }
 }
