@@ -13,14 +13,35 @@ export function scheduleCartSync(delayMs = 600): void {
   syncTimer = setTimeout(async () => {
     const { conversationId, setCart, setCartSyncError } = useBrgrStore.getState();
 
+    if (process.env.NODE_ENV !== "production") {
+      console.log("[brgr][scheduleCartSync] firing", { conversationId });
+    }
+
     if (!conversationId) {
       return;
     }
 
     try {
       const cart = await viewCart(conversationId);
+      if (process.env.NODE_ENV !== "production") {
+        console.log("[brgr][scheduleCartSync] viewCart result", cart);
+      }
+
+      const currentCart = useBrgrStore.getState().cart;
+      const pendingLines = currentCart.lines.filter((line) => line.line_id.startsWith("pending-"));
+
+      if (cart.lines.length === 0 && pendingLines.length > 0) {
+        if (process.env.NODE_ENV !== "production") {
+          console.log("[brgr][scheduleCartSync] preserving pending cart lines", pendingLines);
+        }
+        return;
+      }
+
       setCart(cart);
     } catch (error) {
+      if (process.env.NODE_ENV !== "production") {
+        console.error("[brgr][scheduleCartSync] viewCart error", error);
+      }
       setCartSyncError(error instanceof Error ? error.message : "Could not sync cart");
     }
   }, delayMs);

@@ -1,11 +1,31 @@
 import type { Metadata } from "next";
-import { Outfit } from "next/font/google";
+import { Anton, Inter_Tight, JetBrains_Mono, Tajawal } from "next/font/google";
 import { AppProviders } from "@/components/app-providers";
 import "./globals.css";
 
-const outfit = Outfit({
+const anton = Anton({
   subsets: ["latin"],
-  variable: "--font-outfit",
+  weight: "400",
+  variable: "--font-anton",
+  display: "swap",
+});
+
+const interTight = Inter_Tight({
+  subsets: ["latin"],
+  variable: "--font-inter-tight",
+  display: "swap",
+});
+
+const tajawal = Tajawal({
+  subsets: ["arabic"],
+  weight: ["400", "500", "700", "900"],
+  variable: "--font-tajawal",
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-jetbrains",
   display: "swap",
 });
 
@@ -16,7 +36,12 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" dir="ltr" className={outfit.variable} suppressHydrationWarning>
+    <html
+      lang="en"
+      dir="ltr"
+      className={`${anton.variable} ${interTight.variable} ${tajawal.variable} ${jetbrains.variable}`}
+      suppressHydrationWarning
+    >
       <body>
         <AppProviders>{children}</AppProviders>
       </body>

@@ -38,46 +38,62 @@ export function MenuGrid({
 
   return (
     <section className="min-w-0" aria-label={t.menu}>
-      <div className="mb-4 flex items-center justify-between gap-4">
+      <div className="mb-5 flex items-end justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-black tracking-tight text-white sm:text-3xl">{t.menu}</h1>
-          <p className="mt-1 text-sm font-medium text-brgr-muted">{categories.length} categories</p>
+          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-brgr-muted">
+            {language === "ar" ? "اختار من" : "Pick from"}
+          </p>
+          <h1 className="mt-1 font-display text-4xl leading-none tracking-tight text-brgr-ink sm:text-5xl">
+            {t.menu}
+          </h1>
+          <p className="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-brgr-muted">
+            {categories.length} {language === "ar" ? "أقسام" : "categories"}
+          </p>
         </div>
 
         {activeCategory ? (
           <button
             type="button"
             onClick={() => onCategorySelect(null)}
-            className="h-10 rounded border border-white/15 bg-brgr-surface px-3 text-sm font-semibold text-brgr-text transition hover:border-brgr-gold/60"
+            className="btn-diner h-10 px-3 text-[11px] uppercase tracking-[0.18em]"
           >
-            Overview
+            {language === "ar" ? "كل الأقسام" : "Show all"}
           </button>
         ) : null}
       </div>
 
-      <div className="menu-scrollbar sticky top-[73px] z-20 -mx-4 mb-5 flex gap-2 overflow-x-auto border-y border-white/10 bg-[rgba(24,24,27,0.92)] px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 md:top-[77px] lg:-mx-8 lg:px-8">
-        {categories.map((category) => {
-          const isActive = activeCategory === category.name_en;
+      <div className="sticky top-[72px] z-20 -mx-4 mb-6 border-y-[3px] border-brgr-ink bg-brgr-cream/95 backdrop-blur sm:-mx-6 lg:-mx-8">
+        <div className="menu-chip-fade relative">
+          <div className="menu-scrollbar flex gap-2 overflow-x-auto px-4 py-3 sm:px-6 md:flex-wrap md:overflow-visible lg:px-8">
+            {categories.map((category) => {
+              const isActive = activeCategory === category.name_en;
 
-          return (
-            <button
-              key={category.category_id}
-              type="button"
-              onClick={() => onCategorySelect(isActive ? null : category.name_en)}
-              className={clsx(
-                "h-10 shrink-0 rounded border px-4 text-sm font-bold transition",
-                isActive
-                  ? "border-brgr-gold bg-brgr-gold text-brgr-goldink"
-                  : "border-white/15 bg-brgr-surface text-brgr-text hover:border-brgr-gold/60",
-              )}
-            >
-              {getCategoryLabel(category, language)}
-            </button>
-          );
-        })}
+              return (
+                <button
+                  key={category.category_id}
+                  type="button"
+                  onClick={() => onCategorySelect(isActive ? null : category.name_en)}
+                  aria-pressed={isActive}
+                  className={clsx(
+                    "btn-diner h-11 shrink-0 px-4 text-xs uppercase tracking-[0.14em]",
+                    isActive && "is-active",
+                  )}
+                >
+                  {getCategoryLabel(category, language)}
+                  <span
+                    aria-hidden
+                    className="ms-2 inline-block rounded-full border-2 border-current px-1.5 text-[10px] font-black leading-tight opacity-70"
+                  >
+                    {category.item_count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
       </div>
 
-      <div className="space-y-8">
+      <div className="space-y-10">
         {categories.map((category) => {
           const isMuted = Boolean(activeCategory && activeCategory !== category.name_en);
           const isActive = !activeCategory || activeCategory === category.name_en;
@@ -88,27 +104,30 @@ export function MenuGrid({
               ref={(node) => {
                 sectionRefs.current[category.name_en] = node;
               }}
-              className={clsx("scroll-mt-36 transition-opacity duration-300", isMuted && "opacity-35")}
+              className={clsx(
+                "scroll-mt-44 transition-opacity duration-300 md:scroll-mt-52",
+                isMuted && "opacity-35",
+              )}
               aria-hidden={!isActive}
             >
-              <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-                <div>
-                  <h2 className="text-xl font-black tracking-tight text-white">
+              <div className="mb-4 flex flex-wrap items-end justify-between gap-3 border-b-2 border-dashed border-brgr-ink/30 pb-3">
+                <div className="flex items-baseline gap-3">
+                  <span className="font-display text-3xl tracking-tight text-brgr-ink">
                     {getCategoryLabel(category, language)}
-                  </h2>
-                  <p className="text-sm font-medium text-brgr-muted">
+                  </span>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brgr-muted">
                     {category.item_count} {category.item_count === 1 ? t.item : t.items}
-                  </p>
+                  </span>
                 </div>
 
                 {category.price_range_egp ? (
-                  <span className="rounded border border-brgr-gold/40 bg-black/40 px-3 py-1 text-sm font-bold text-brgr-gold">
-                    {formatPrice(category.price_range_egp[0])} - {formatPrice(category.price_range_egp[1])}
+                  <span className="rounded-full border-2 border-brgr-ink bg-brgr-mustard px-3 py-1 text-xs font-black text-brgr-ink shadow-chip">
+                    {formatPrice(category.price_range_egp[0])} — {formatPrice(category.price_range_egp[1])}
                   </span>
                 ) : null}
               </div>
 
-              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {category.items.map((item) => (
                   <ItemCard
                     key={item.id}
@@ -143,25 +162,27 @@ function ItemCard({
       type="button"
       onClick={onSelect}
       className={clsx(
-        "group flex min-h-card w-full flex-col justify-between rounded-lg border bg-brgr-surface p-4 text-start transition hover:-translate-y-0.5",
-        highlighted ? "pulse-highlight border-brgr-gold" : "border-white/10 hover:border-brgr-gold/60",
-        muted && "pointer-events-none",
+        "diner-card group flex min-h-card w-full flex-col justify-between p-4 text-start",
+        highlighted && "is-hot",
+        muted && "pointer-events-none is-muted",
       )}
     >
       <div className="flex items-start justify-between gap-3">
-        <h3 className="min-w-0 text-lg font-black leading-tight tracking-tight text-white">
+        <h3 className="min-w-0 font-display text-xl leading-tight tracking-tight text-brgr-ink">
           {normalizeDisplayName(item.name)}
         </h3>
-        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-brgr-muted transition group-hover:text-brgr-gold rtl:rotate-180" />
+        <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-brgr-muted transition group-hover:text-brgr-red rtl:rotate-180" />
       </div>
 
       <div className="mt-5 flex items-end justify-between gap-3">
-        <span className="rounded border border-brgr-gold/40 bg-black/40 px-3 py-1 text-sm font-black text-brgr-gold">
+        <span className="rounded-full border-2 border-brgr-ink bg-brgr-mustard px-3 py-1 text-sm font-black text-brgr-ink shadow-chip">
           {formatPrice(item.price_egp)}
         </span>
 
         {item.modifiers ? (
-          <span className="text-xs font-bold uppercase tracking-wide text-brgr-muted">Options</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.2em] text-brgr-muted">
+            + Options
+          </span>
         ) : null}
       </div>
     </button>

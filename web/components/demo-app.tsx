@@ -1,6 +1,7 @@
 "use client";
 
-import { Languages } from "lucide-react";
+import { Globe } from "lucide-react";
+import { motion } from "framer-motion";
 import { CartSidebar } from "@/components/cart-sidebar";
 import { ItemDetailModal } from "@/components/item-detail-modal";
 import { MenuGrid } from "@/components/menu-grid";
@@ -23,6 +24,8 @@ export function DemoApp() {
   const cart = useBrgrStore((state) => state.cart);
   const transcript = useBrgrStore((state) => state.transcript);
   const conversationId = useBrgrStore((state) => state.conversationId);
+  const agentStatus = useBrgrStore((state) => state.agentStatus);
+  const agentError = useBrgrStore((state) => state.agentError);
   const setLanguage = useBrgrStore((state) => state.setLanguage);
   const setActiveCategory = useBrgrStore((state) => state.setActiveCategory);
   const setDetailItemId = useBrgrStore((state) => state.setDetailItemId);
@@ -30,6 +33,7 @@ export function DemoApp() {
   const removeCartLine = useBrgrStore((state) => state.removeCartLine);
   const setCartSyncError = useBrgrStore((state) => state.setCartSyncError);
   const t = copy[language];
+  const isActive = agentStatus !== "idle";
 
   async function handleRemoveLine(lineId: string) {
     if (!conversationId) {
@@ -50,36 +54,96 @@ export function DemoApp() {
     setLanguage(nextLanguage);
   }
 
+  const tagline = language === "ar" ? "اطلب بصوتك" : "Order with your voice";
+  const sub = language === "ar"
+    ? "اضغط على الزرار، كلم BRGR، وهنرتب لك طلبك."
+    : "Tap the orb, talk to BRGR, and we'll build your order live.";
+
   return (
-    <main className="min-h-screen pb-28 md:pb-8" dir={language === "ar" ? "rtl" : "ltr"}>
-      <header className="sticky top-0 z-30 border-b border-white/10 bg-[rgba(24,24,27,0.9)] backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-          <div className="flex min-w-0 items-baseline gap-3">
-            <span className="text-3xl font-black tracking-tight text-brgr-gold">BRGR</span>
-            <span className="hidden text-sm font-medium text-brgr-muted sm:inline">Voice Demo</span>
+    <main
+      className={`relative min-h-screen overflow-x-hidden pb-[260px] md:pb-[280px] ${language === "ar" ? "font-arabic" : ""}`}
+      dir={language === "ar" ? "rtl" : "ltr"}
+    >
+      {/* HEADER — bold diner signage */}
+      <header className="sticky top-0 z-30 border-b-[3px] border-brgr-ink bg-brgr-cream/95 backdrop-blur">
+        <div className="halftone-mustard h-1.5" aria-hidden />
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="grid h-11 w-11 place-items-center rounded-full border-[3px] border-brgr-ink bg-brgr-red text-brgr-cream shadow-chip">
+              <span className="font-display text-2xl leading-none">B</span>
+            </span>
+            <div className="flex flex-col leading-none">
+              <span className="font-display text-3xl tracking-tight text-brgr-ink sm:text-4xl">
+                BRGR<span className="text-brgr-red">.</span>
+              </span>
+              <span className="mt-1 text-[10px] font-black uppercase tracking-[0.3em] text-brgr-muted">
+                {language === "ar" ? "صوت · تجربة" : "Voice · Demo"}
+              </span>
+            </div>
           </div>
 
-          <div className="flex items-center gap-2" aria-label={t.language}>
-            <Languages className="h-4 w-4 text-brgr-muted" aria-hidden />
-            {(["en", "ar"] as const).map((option) => (
-              <button
-                key={option}
-                type="button"
-                onClick={() => handleLanguageChange(option)}
-                className={`h-9 min-w-11 rounded border px-3 text-sm font-semibold transition ${
-                  language === option
-                    ? "border-brgr-gold bg-brgr-gold text-brgr-goldink"
-                    : "border-white/15 bg-brgr-surface text-brgr-text hover:border-brgr-gold/60"
-                }`}
-              >
-                {option.toUpperCase()}
-              </button>
-            ))}
-          </div>
+          <LanguageSwitch language={language} onChange={handleLanguageChange} label={t.language} />
         </div>
       </header>
 
-      <div className="mx-auto grid max-w-7xl gap-5 px-4 py-5 sm:px-6 md:grid-cols-[minmax(0,1fr)_22rem] lg:px-8">
+      {/* HERO STRIP — frames the orb's importance */}
+      <section className="relative mx-auto max-w-7xl px-4 pt-6 sm:px-6 lg:px-8">
+        <div className="relative overflow-hidden rounded-[20px] border-[3px] border-brgr-ink bg-brgr-mustard p-5 shadow-[8px_8px_0_0_#1A1410] sm:p-7">
+          <div className="halftone absolute inset-0 opacity-30" aria-hidden />
+          <div className="relative flex flex-wrap items-center justify-between gap-5">
+            <div className="min-w-0 max-w-2xl">
+              <p className="inline-flex items-center gap-2 rounded-full border-2 border-brgr-ink bg-brgr-cream px-3 py-1 text-[10px] font-black uppercase tracking-[0.25em] text-brgr-ink shadow-chip">
+                <span className={`h-2 w-2 rounded-full ${isActive ? "bg-brgr-red animate-pulse" : "bg-brgr-ink"}`} />
+                {isActive ? (language === "ar" ? "البث مباشر" : "Live now") : (language === "ar" ? "جاهز لطلبك" : "Ready when you are")}
+              </p>
+              <h1 className="mt-3 font-display text-[clamp(2.5rem,6vw,4.5rem)] leading-[0.95] tracking-tight text-brgr-ink">
+                {tagline.split(" ").map((word, i) => (
+                  <span key={i} className={i % 2 === 1 ? "text-brgr-red" : ""}>
+                    {word}{" "}
+                  </span>
+                ))}
+              </h1>
+              <p className="mt-3 max-w-md text-base font-semibold text-brgr-ink/80">{sub}</p>
+            </div>
+
+            <div className="hidden flex-col items-end gap-2 text-end md:flex">
+              <div className="rounded-2xl border-2 border-brgr-ink bg-brgr-cream px-4 py-3 shadow-chip">
+                <p className="text-[10px] font-black uppercase tracking-[0.25em] text-brgr-muted">
+                  {language === "ar" ? "الفاتورة" : "Tab"}
+                </p>
+                <p className="font-display text-3xl text-brgr-ink">EGP {cart.total_egp}</p>
+              </div>
+              <p className="text-[10px] font-black uppercase tracking-[0.25em] text-brgr-ink/70">
+                {cart.line_count} {cart.line_count === 1 ? t.item : t.items}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {agentError ? (
+          <div className="mt-3 rounded-lg border-2 border-brgr-red bg-brgr-red/10 px-4 py-2 text-sm font-bold text-brgr-red">
+            {agentError}
+          </div>
+        ) : null}
+      </section>
+
+      {/* MARQUEE */}
+      <div className="mt-6 overflow-hidden border-y-[3px] border-brgr-ink bg-brgr-ink py-2 diner-ticker-mask">
+        <div className="marquee whitespace-nowrap font-display text-2xl tracking-[0.08em] text-brgr-mustard">
+          {Array.from({ length: 2 }).map((_, group) => (
+            <span key={group} className="flex shrink-0 items-center">
+              {["FRESH OFF THE GRILL", "★", "VOICE ORDERING", "★", "EGYPTIAN ARABIC", "★", "TAP THE ORB", "★", "DOUBLE-PATTY READY", "★"].map((word, i) => (
+                <span key={i} className="px-6">
+                  {word === "★" ? <span className="text-brgr-red">★</span> : word}
+                </span>
+              ))}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* MAIN GRID */}
+      <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 md:grid-cols-[minmax(0,1fr)_22rem] lg:px-8">
         <MenuGrid
           categories={categories}
           activeCategory={activeCategory}
@@ -91,12 +155,78 @@ export function DemoApp() {
 
         <aside className="md:sticky md:top-24 md:h-[calc(100vh-7rem)]">
           <CartSidebar cart={cart} language={language} onRemoveLine={handleRemoveLine} />
-          <VoiceButton className="fixed bottom-20 end-4 z-40 md:static md:mt-4 md:w-full" />
         </aside>
       </div>
 
-      <TranscriptTicker messages={transcript} language={language} />
+      {/* ============ FLOATING VOICE DOCK ============ */}
+      <div
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-4 px-4 pb-6 sm:pb-8"
+        dir={language === "ar" ? "rtl" : "ltr"}
+      >
+        <TranscriptTicker messages={transcript} language={language} active={isActive} />
+
+        <div className="pointer-events-auto relative">
+          {/* Shadow plate */}
+          <div
+            aria-hidden
+            className="absolute -inset-x-12 -inset-y-2 -z-10 rounded-[100%] bg-brgr-cream/95 blur-md"
+          />
+          <VoiceButton />
+        </div>
+      </div>
+
       <ItemDetailModal itemId={detailItemId} language={language} onClose={() => setDetailItemId(null)} />
     </main>
+  );
+}
+
+function LanguageSwitch({
+  language,
+  onChange,
+  label,
+}: {
+  language: Language;
+  onChange: (next: Language) => void;
+  label: string;
+}) {
+  const isAr = language === "ar";
+  const next: Language = isAr ? "en" : "ar";
+
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={isAr}
+      aria-label={`${label}: ${isAr ? "العربية" : "English"}`}
+      onClick={() => onChange(next)}
+      className="relative grid h-10 grid-cols-2 items-center overflow-hidden rounded-full border-[3px] border-brgr-ink bg-brgr-cream shadow-chip transition active:translate-y-[1px] active:shadow-none"
+      style={{ width: 124 }}
+    >
+      <motion.span
+        aria-hidden
+        layout
+        className="absolute inset-y-0 w-1/2 rounded-full bg-brgr-red"
+        initial={false}
+        animate={{ x: isAr ? "100%" : "0%" }}
+        transition={{ type: "spring", stiffness: 360, damping: 28 }}
+      />
+      <span
+        aria-hidden
+        className={`pointer-events-none relative z-10 flex items-center justify-center gap-1 text-[11px] font-black uppercase tracking-[0.18em] transition-colors ${
+          isAr ? "text-brgr-ink/55" : "text-brgr-cream"
+        }`}
+      >
+        <Globe className="h-3.5 w-3.5" aria-hidden />
+        EN
+      </span>
+      <span
+        aria-hidden
+        className={`pointer-events-none relative z-10 flex items-center justify-center text-sm font-black tracking-tight transition-colors ${
+          isAr ? "text-brgr-cream" : "text-brgr-ink/55"
+        }`}
+      >
+        ع
+      </span>
+    </button>
   );
 }

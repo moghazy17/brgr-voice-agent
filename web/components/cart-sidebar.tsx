@@ -19,26 +19,32 @@ export function CartSidebar({ cart, language, onRemoveLine }: CartSidebarProps) 
 
   return (
     <>
-      <section className="hidden h-full flex-col rounded-lg border border-white/10 bg-brgr-surface md:flex" aria-label={t.order}>
+      {/* Desktop sidebar */}
+      <section
+        className="hidden h-full flex-col overflow-hidden rounded-[18px] border-[3px] border-brgr-ink bg-brgr-cream shadow-[8px_8px_0_0_#1A1410] md:flex"
+        aria-label={t.order}
+      >
         <CartContent cart={cart} language={language} onRemoveLine={onRemoveLine} />
       </section>
 
+      {/* Mobile: floating chip above the orb dock */}
       <div className="md:hidden">
         <button
           type="button"
           onClick={() => setMobileOpen(true)}
-          className="fixed inset-x-0 bottom-0 z-30 flex h-16 items-center justify-between border-t border-white/10 bg-brgr-surface px-4 shadow-panel"
+          className="pointer-events-auto fixed start-4 z-30 flex items-center gap-2 rounded-full border-[3px] border-brgr-ink bg-brgr-cream px-3 py-2 shadow-chip"
+          style={{ bottom: "calc(env(safe-area-inset-bottom, 0px) + 220px)" }}
+          aria-label={t.order}
         >
-          <span className="flex items-center gap-3 text-start">
-            <ShoppingBag className="h-5 w-5 text-brgr-gold" aria-hidden />
-            <span>
-              <span className="block text-sm font-black text-white">{t.order}</span>
-              <span className="block text-xs font-semibold text-brgr-muted">
-                {cart.line_count} {cart.line_count === 1 ? t.item : t.items}
-              </span>
-            </span>
+          <span className="grid h-8 w-8 place-items-center rounded-full border-2 border-brgr-ink bg-brgr-red text-brgr-cream">
+            <ShoppingBag className="h-4 w-4" aria-hidden />
           </span>
-          <span className="text-lg font-black text-brgr-gold">{formatPrice(cart.total_egp)}</span>
+          <span className="flex flex-col items-start leading-tight">
+            <span className="text-[9px] font-black uppercase tracking-[0.2em] text-brgr-muted">
+              {cart.line_count} {cart.line_count === 1 ? t.item : t.items}
+            </span>
+            <span className="font-display text-base text-brgr-ink">EGP {cart.total_egp}</span>
+          </span>
         </button>
 
         <AnimatePresence>
@@ -47,26 +53,26 @@ export function CartSidebar({ cart, language, onRemoveLine }: CartSidebarProps) 
               <motion.button
                 type="button"
                 aria-label={t.close}
-                className="fixed inset-0 z-40 bg-black/30"
+                className="fixed inset-0 z-[60] bg-brgr-ink/60"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 onClick={() => setMobileOpen(false)}
               />
               <motion.section
-                className="fixed inset-x-0 bottom-0 z-50 max-h-[82vh] overflow-hidden rounded-t-lg border-t border-white/10 bg-brgr-surface shadow-panel"
+                className="fixed inset-x-0 bottom-0 z-[70] max-h-[82vh] overflow-hidden rounded-t-[24px] border-t-[3px] border-brgr-ink bg-brgr-cream shadow-panel"
                 initial={{ y: "100%" }}
                 animate={{ y: 0 }}
                 exit={{ y: "100%" }}
                 transition={{ type: "spring", damping: 28, stiffness: 260 }}
                 aria-label={t.order}
               >
-                <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
-                  <h2 className="text-lg font-black text-white">{t.order}</h2>
+                <div className="flex items-center justify-between border-b-2 border-dashed border-brgr-ink/30 bg-brgr-mustard px-4 py-3">
+                  <h2 className="font-display text-2xl tracking-tight text-brgr-ink">{t.order}</h2>
                   <button
                     type="button"
                     onClick={() => setMobileOpen(false)}
-                    className="grid h-9 w-9 place-items-center rounded border border-white/15 text-brgr-text"
+                    className="grid h-9 w-9 place-items-center rounded-full border-2 border-brgr-ink bg-brgr-cream text-brgr-ink"
                     title={t.close}
                   >
                     <X className="h-4 w-4" aria-hidden />
@@ -95,11 +101,17 @@ function CartContent({
   return (
     <div className="flex h-full min-h-0 flex-col">
       {!mobile ? (
-        <div className="border-b border-white/10 p-4">
-          <h2 className="text-xl font-black tracking-tight text-white">{t.order}</h2>
-          <p className="mt-1 text-sm font-medium text-brgr-muted">
-            {cart.line_count} {cart.line_count === 1 ? t.item : t.items}
-          </p>
+        <div className="relative border-b-2 border-dashed border-brgr-ink/30 bg-brgr-mustard p-4">
+          <div className="halftone absolute inset-0 opacity-25" aria-hidden />
+          <div className="relative">
+            <p className="text-[10px] font-black uppercase tracking-[0.25em] text-brgr-ink/70">
+              {language === "ar" ? "فاتورتك" : "Your tab"}
+            </p>
+            <h2 className="font-display text-3xl tracking-tight text-brgr-ink">{t.order}</h2>
+            <p className="mt-1 text-xs font-bold text-brgr-ink/70">
+              {cart.line_count} {cart.line_count === 1 ? t.item : t.items}
+            </p>
+          </div>
         </div>
       ) : null}
 
@@ -114,21 +126,26 @@ function CartContent({
           ) : (
             <motion.div
               key="empty"
-              className="grid min-h-40 place-items-center rounded-lg border border-dashed border-white/15 text-sm font-semibold text-brgr-muted"
+              className="grid min-h-40 place-items-center rounded-2xl border-2 border-dashed border-brgr-ink/40 bg-brgr-cream px-3 text-center text-sm font-bold text-brgr-muted"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              {t.emptyCart}
+              <span>
+                <span className="block font-display text-2xl text-brgr-ink">{t.emptyCart}</span>
+                <span className="mt-1 block text-[11px] font-bold uppercase tracking-[0.2em] text-brgr-muted">
+                  {language === "ar" ? "كلم BRGR لتبدا" : "Tap the orb to begin"}
+                </span>
+              </span>
             </motion.div>
           )}
         </AnimatePresence>
       </div>
 
-      <div className="border-t border-white/10 p-4">
+      <div className="border-t-2 border-dashed border-brgr-ink/30 bg-brgr-cream p-4">
         <div className="flex items-center justify-between gap-3">
-          <span className="text-sm font-bold text-brgr-muted">{t.total}</span>
-          <span className="text-2xl font-black text-brgr-gold">{formatPrice(cart.total_egp)}</span>
+          <span className="text-[10px] font-black uppercase tracking-[0.25em] text-brgr-muted">{t.total}</span>
+          <span className="font-display text-3xl text-brgr-red">EGP {cart.total_egp}</span>
         </div>
       </div>
     </div>
@@ -153,30 +170,34 @@ function CartLineRow({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, x: language === "ar" ? 16 : -16 }}
-      className="rounded-lg border border-white/10 bg-black/30 p-3"
+      className="rounded-[14px] border-2 border-brgr-ink bg-brgr-paper p-3 shadow-chip"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-black leading-tight text-white">
-            {line.quantity}x {line.name}
+          <p className="font-display text-lg leading-tight tracking-tight text-brgr-ink">
+            <span className="me-1 inline-flex h-6 min-w-6 items-center justify-center rounded-full bg-brgr-red px-1.5 text-xs font-black text-brgr-cream">
+              {line.quantity}×
+            </span>
+            {line.name}
           </p>
-          <p className="mt-1 text-xs font-semibold text-brgr-muted">{formatPrice(line.unit_price)} each</p>
+          <p className="mt-1 text-xs font-bold text-brgr-muted">{formatPrice(line.unit_price)} each</p>
         </div>
         <button
           type="button"
           onClick={() => onRemoveLine(line.line_id)}
-          className="grid h-8 w-8 shrink-0 place-items-center rounded border border-white/15 bg-brgr-surface text-brgr-muted transition hover:border-brgr-gold/60 hover:text-brgr-gold"
+          className="grid h-8 w-8 shrink-0 place-items-center rounded-full border-2 border-brgr-ink bg-brgr-cream text-brgr-ink transition hover:bg-brgr-red hover:text-brgr-cream"
           title={t.remove}
+          aria-label={t.remove}
         >
           <Trash2 className="h-4 w-4" aria-hidden />
         </button>
       </div>
 
       {line.modifiers?.bun || addOns || line.notes ? (
-        <div className="mt-3 space-y-1 text-xs font-semibold text-brgr-muted">
-          {line.modifiers?.bun ? <p>{line.modifiers.bun}</p> : null}
-          {addOns ? <p>{addOns}</p> : null}
-          {line.notes ? <p>{line.notes}</p> : null}
+        <div className="mt-2 space-y-0.5 text-[11px] font-semibold text-brgr-muted">
+          {line.modifiers?.bun ? <p>· {line.modifiers.bun}</p> : null}
+          {addOns ? <p>· {addOns}</p> : null}
+          {line.notes ? <p className="italic">"{line.notes}"</p> : null}
         </div>
       ) : null}
     </motion.div>
