@@ -1,4 +1,4 @@
-import rawMenuData from "../../brgr-menu.json";
+import rawMenuData from "./brgr-menu.json";
 import type { Language, MenuCategory, MenuData, MenuItem } from "./types";
 
 export const menuData = rawMenuData as MenuData;
