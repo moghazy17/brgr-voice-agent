@@ -8,5 +8,10 @@ response.json
 dist/
 coverage/
 *.log
+*.tsbuildinfo
 agent/.agent-id
 web/.env.local
+.playwright-mcp/
+brgr-viewport.png
+brgr-demo-themed.png
+brgr-home.png

@@ -52,4 +52,34 @@ Save the returned agent ID to `agent/.agent-id` and to `web/.env.local` as `NEXT
 
 ## Web
 
-The web app is built in phase 5. It uses the public ElevenLabs agent ID and browser client tools only.
+```bash
+cd web
+npm install
+npm run dev
+npm run typecheck
+npm run build
+```
+
+The web app uses the public ElevenLabs agent ID and browser client tools only.
+
+Required env:
+
+```bash
+NEXT_PUBLIC_ELEVENLABS_AGENT_ID=agent_id_from_elevenlabs
+```
+
+Optional env:
+
+```bash
+NEXT_PUBLIC_BRGR_BACKEND_URL=https://brgr-tools.vercel.app
+```
+
+For Vercel, create/link the website as a separate project from the backend and set Root Directory to `web`. The backend project is rooted at `backend`; do not leave the website project Root Directory as `.` in this monorepo.
+
+Production deploy is intentionally gated:
+
+```bash
+cd web
+vercel link
+vercel --prod
+```
