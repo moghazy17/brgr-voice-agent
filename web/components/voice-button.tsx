@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { AudioWaveform, Loader2, Mic, PhoneOff } from "lucide-react";
 import { clsx } from "clsx";
 import { BRGR_AGENT_ID } from "@/lib/agent-config";
-import { handleConversationMessage, extractConversationId } from "@/lib/conversation-events";
+import { handleConversationMessage, extractConversationId, resetConversationEventState } from "@/lib/conversation-events";
 import { copy } from "@/lib/i18n";
 import { useBrgrStore } from "@/lib/store";
 
@@ -16,6 +16,7 @@ type VoiceButtonProps = {
 
 export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
   const [isStarting, setIsStarting] = useState(false);
+  const activeConversationIdRef = useRef<string | null>(null);
   const language = useBrgrStore((state) => state.language);
   const agentStatus = useBrgrStore((state) => state.agentStatus);
   const setAgentStatus = useBrgrStore((state) => state.setAgentStatus);
@@ -29,6 +30,7 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
     onConnect: (event: unknown) => {
       const conversationId = extractConversationId(event);
       if (conversationId) {
+        activeConversationIdRef.current = conversationId;
         setConversationId(conversationId);
       }
 
@@ -37,22 +39,38 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
       setAgentError(null);
     },
     onDisconnect: () => {
+      activeConversationIdRef.current = null;
       setIsStarting(false);
       setAgentStatus("idle");
     },
     onMessage: (message: unknown) => {
+      const conversationId = extractConversationId(message);
+      if (activeConversationIdRef.current && conversationId && conversationId !== activeConversationIdRef.current) {
+        return;
+      }
+
       if (process.env.NODE_ENV !== "production") {
         console.log("[brgr][onMessage]", message);
       }
       handleConversationMessage(message);
     },
     onAgentToolRequest: (message: unknown) => {
+      const conversationId = extractConversationId(message);
+      if (activeConversationIdRef.current && conversationId && conversationId !== activeConversationIdRef.current) {
+        return;
+      }
+
       if (process.env.NODE_ENV !== "production") {
         console.log("[brgr][onAgentToolRequest]", message);
       }
       handleConversationMessage(message);
     },
     onAgentToolResponse: (message: unknown) => {
+      const conversationId = extractConversationId(message);
+      if (activeConversationIdRef.current && conversationId && conversationId !== activeConversationIdRef.current) {
+        return;
+      }
+
       if (process.env.NODE_ENV !== "production") {
         console.log("[brgr][onAgentToolResponse]", message);
       }
@@ -61,6 +79,7 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
     onConversationMetadata: (message: unknown) => {
       const conversationId = extractConversationId(message);
       if (conversationId) {
+        activeConversationIdRef.current = conversationId;
         setConversationId(conversationId);
       }
     },
@@ -105,8 +124,11 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
     setIsStarting(true);
     setAgentError(null);
     setConversationId(null);
+    activeConversationIdRef.current = null;
     clearCart();
     clearTranscript();
+    resetConversationEventState();
+    conversation.endSession();
 
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });

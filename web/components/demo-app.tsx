@@ -10,6 +10,7 @@ import { TranscriptTicker } from "@/components/transcript-ticker";
 import { VoiceButton } from "@/components/voice-button";
 import { removeLine, viewCart } from "@/lib/cart-api";
 import { useRegisterClientTools } from "@/lib/client-tools";
+import { resetConversationEventState } from "@/lib/conversation-events";
 import { copy } from "@/lib/i18n";
 import { categories } from "@/lib/menu-data";
 import { useBrgrStore } from "@/lib/store";
@@ -43,6 +44,7 @@ export function DemoApp() {
     clearCart();
     clearTranscript();
     setConversationId(null);
+    resetConversationEventState();
   }, [clearCart, clearTranscript, setConversationId]);
 
   async function handleRemoveLine(lineId: string) {

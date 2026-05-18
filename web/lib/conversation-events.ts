@@ -25,6 +25,11 @@ const OPTIMISTIC_DEDUPE_MS = 1000;
 const recentTranscriptEvents = new Map<string, number>();
 const TRANSCRIPT_DEDUPE_MS = 1500;
 
+export function resetConversationEventState(): void {
+  recentOptimisticAdds.clear();
+  recentTranscriptEvents.clear();
+}
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
