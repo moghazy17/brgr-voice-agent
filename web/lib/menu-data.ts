@@ -40,8 +40,21 @@ export function findCategoryForItem(itemId: number | null | undefined): MenuCate
   return categoryLookup.get(Number(itemId));
 }
 
+const CATEGORY_DISPLAY_OVERRIDES_EN: Record<string, string> = {
+  "Beef Burgers": "BRGR",
+  "Chicken Burgers": "CHKN",
+};
+
+const CATEGORY_DISPLAY_OVERRIDES_AR: Record<string, string> = {
+  "Beef Burgers": "برجر",
+  "Chicken Burgers": "تشكن",
+};
+
 export function getCategoryLabel(category: MenuCategory, language: Language): string {
-  return language === "ar" && category.name_ar ? category.name_ar : category.name_en;
+  if (language === "ar") {
+    return CATEGORY_DISPLAY_OVERRIDES_AR[category.name_en] ?? category.name_ar ?? category.name_en;
+  }
+  return CATEGORY_DISPLAY_OVERRIDES_EN[category.name_en] ?? category.name_en;
 }
 
 export function normalizeDisplayName(value: string): string {

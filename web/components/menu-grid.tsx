@@ -84,9 +84,10 @@ export function MenuGrid({
 
       <div className="sticky top-[72px] z-10 -mx-4 mb-6 border-y-[3px] border-brgr-ink bg-brgr-cream/95 backdrop-blur sm:-mx-6 lg:-mx-8">
         <div className="menu-chip-fade relative">
-          <div className="menu-scrollbar flex gap-2 overflow-x-auto px-4 py-2 sm:px-6 md:flex-wrap md:overflow-visible lg:px-8">
+          <div className="menu-scrollbar flex items-center gap-1.5 overflow-x-auto px-4 py-2 sm:px-6 md:flex-wrap md:justify-center md:gap-2 md:overflow-visible lg:px-8">
             {categories.map((category) => {
               const isActive = activeCategory === category.name_en;
+              const label = getCategoryLabel(category, language);
 
               return (
                 <button
@@ -94,15 +95,16 @@ export function MenuGrid({
                   type="button"
                   onClick={() => onCategorySelect(isActive ? null : category.name_en)}
                   aria-pressed={isActive}
+                  aria-label={`${category.name_en} (${category.item_count})`}
                   className={clsx(
-                    "btn-diner h-9 shrink-0 px-3 text-[11px] uppercase tracking-[0.12em]",
+                    "btn-diner inline-flex h-9 shrink-0 items-center gap-1.5 px-3 text-[11px] uppercase tracking-[0.14em] tabular-nums",
                     isActive && "is-active",
                   )}
                 >
-                  {getCategoryLabel(category, language)}
+                  <span className="whitespace-nowrap font-black">{label}</span>
                   <span
                     aria-hidden
-                    className="ms-1.5 inline-block rounded-full border-2 border-current px-1.5 text-[9px] font-black leading-tight opacity-70"
+                    className="inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full bg-brgr-ink/10 px-1 text-[9px] font-black leading-none text-current opacity-80"
                   >
                     {category.item_count}
                   </span>
