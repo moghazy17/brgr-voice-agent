@@ -7,7 +7,13 @@ Bilingual English/Egyptian Arabic voice ordering demo for BRGR, powered by Eleve
 - `agent/` - ElevenLabs agent and tool configuration.
 - `backend/` - Vercel Edge Functions for cart and order tool webhooks.
 - `web/` - Next.js demo website. Built in phase 5 after the backend and agent gates.
+- `web/public/menu-images/` - 131 item images served as static assets from `/menu-images/<slug>.png`. Mapped to menu items via `web/lib/menu-images.ts`.
 - `brgr-menu.json` - cleaned customer-facing menu data. This is the only menu source used by the agent and backend.
+
+## Live deployments
+
+- Demo UI: https://brgr-demo.vercel.app
+- Tools backend (ElevenLabs webhook target, pinned to `fra1`): https://brgr-tools.vercel.app
 
 ## Environment
 
