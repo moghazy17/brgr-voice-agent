@@ -8,6 +8,9 @@ const root = path.resolve(__dirname, "..");
 const agentDir = path.join(root, "agent");
 
 const menu = JSON.parse(await readFile(path.join(root, "brgr-menu.json"), "utf8"));
+const existingAgentId = await readFile(path.join(agentDir, ".agent-id"), "utf8")
+  .then((value) => value.trim() || null)
+  .catch(() => null);
 
 const categories = menu.categories ?? [];
 
@@ -93,22 +96,25 @@ ${addOns}
 
 1. Greet warmly. Ask what they're in the mood for. If they're undecided, suggest a hero item (Atomic Double, Truffle Single, Buffalo CHKN).
 2. As items come up, call \`add_to_cart\` with the item ID, quantity, and any modifiers.
-3. Briefly confirm each add without price unless asked: "Added Atomic Double." / "تمام، ضفت Atomic Double."
-4. Suggest natural upsells once per order - fries with a burger, a shake to go with - but never twice. Don't be pushy.
-5. Before submitting, call \`view_cart\`, recap item names briefly, and ask for confirmation. Mention the total only if the customer asks.
-6. On confirmation, call \`submit_order\` immediately. Do not ask for name, phone number, delivery address, or payment details in this demo.
-7. Read out the order number, thank them warmly, end the call.
-8. After the order number has been read and the customer has no final question, call \`end_call\`.
+3. If the customer asks for multiple different items in one turn, call \`add_to_cart\` separately for each distinct menu item. After those calls, immediately call \`view_cart\` and verify the real cart contains every requested item before saying they were added. If one is missing, add the missing item and call \`view_cart\` again.
+4. Briefly confirm each successful add without price unless asked: "Added Atomic Double." / "تمام، ضفت Atomic Double."
+5. Suggest natural upsells once per order - fries with a burger, a shake to go with - but never twice. Don't be pushy.
+6. Before submitting, call \`view_cart\`, recap item names briefly, and ask for confirmation. Mention the total only if the customer asks.
+7. On confirmation, call \`submit_order\` immediately. Do not ask for name, phone number, delivery address, or payment details in this demo.
+8. Read out the order number, thank them warmly, end the call.
+9. After the order number has been read and the customer has no final question, call \`end_call\`.
 
 # Tool usage
 
 You have ACTION tools (server webhooks that mutate state) and DISPLAY tools (client-side UI updates that run in the user's browser).
 
 **Action tools:**
-- \`add_to_cart(menu_item_id, quantity, modifiers?, notes?)\` - add an item
+- \`add_to_cart(menu_item_id, quantity, modifiers?, notes?)\` - add exactly one menu item type. It cannot add two different item IDs in one call.
 - \`view_cart()\` - get current cart contents and EGP total
 - \`remove_from_cart(line_id)\` - remove an item by its line ID
 - \`submit_order()\` - finalize the confirmed demo order
+
+When adding multiple different items, never assume the cart matches your intent. Use the \`view_cart\` response as the source of truth.
 
 **Display tools (call liberally to keep visuals in sync with speech):**
 - \`show_category(category_name)\` - display a category section on screen. Call when you're discussing or about to discuss a category.
@@ -142,7 +148,7 @@ When a tool call takes a moment, say only a tiny filler if needed: "One sec..."
 const addToCartFlat = {
   name: "add_to_cart",
   description:
-    "Add an item to the customer's cart. Call this every time the customer agrees to add something. The menu_item_id MUST come from the menu data in the system prompt - never invent IDs.",
+    "Add exactly one menu item type to the customer's cart. For multiple different items, call this tool once per distinct menu_item_id, then call view_cart to verify the real cart. The menu_item_id MUST come from the menu data in the system prompt - never invent IDs.",
   type: "webhook",
   method: "POST",
   url: "{{BACKEND_URL}}/api/tools/add-to-cart",
@@ -152,11 +158,11 @@ const addToCartFlat = {
   parameters: {
     type: "object",
     properties: {
-      conversation_id: {
+      conversationId: {
         type: "string",
         description: "The ElevenLabs conversation ID. Use the system-injected {{conversation_id}} variable.",
       },
-      menu_item_id: {
+      menuItemId: {
         type: "integer",
         description: "The numeric ID from the menu (e.g., 1101001 for Original Single)",
       },
@@ -171,7 +177,7 @@ const addToCartFlat = {
           "Optional modifications. For burgers, may include 'bun' (one of 'Martin's Potato Bun', 'Original Bun', 'Normal'). May include 'add_ons' (array of Extra Dip item IDs).",
         properties: {
           bun: { type: "string" },
-          add_ons: { type: "array", items: { type: "integer" } },
+          addOns: { type: "array", items: { type: "integer" } },
         },
       },
       notes: {
@@ -179,7 +185,7 @@ const addToCartFlat = {
         description: "Free-text kitchen instructions (e.g., 'no pickles', 'well done')",
       },
     },
-    required: ["conversation_id", "menu_item_id"],
+    required: ["conversationId", "menuItemId"],
   },
 };
 
@@ -192,9 +198,9 @@ const viewCartFlat = {
   parameters: {
     type: "object",
     properties: {
-      conversation_id: { type: "string" },
+      conversationId: { type: "string" },
     },
-    required: ["conversation_id"],
+    required: ["conversationId"],
   },
 };
 
@@ -207,10 +213,10 @@ const removeFromCartFlat = {
   parameters: {
     type: "object",
     properties: {
-      conversation_id: { type: "string" },
-      line_id: { type: "string" },
+      conversationId: { type: "string" },
+      lineId: { type: "string" },
     },
-    required: ["conversation_id", "line_id"],
+    required: ["conversationId", "lineId"],
   },
 };
 
@@ -224,9 +230,9 @@ const submitOrderFlat = {
   parameters: {
     type: "object",
     properties: {
-      conversation_id: { type: "string" },
+      conversationId: { type: "string" },
     },
-    required: ["conversation_id"],
+    required: ["conversationId"],
   },
 };
 
@@ -239,9 +245,9 @@ const clientTools = [
     parameters: {
       type: "object",
       properties: {
-        category_name: { type: "string" },
+        categoryName: { type: "string" },
       },
-      required: ["category_name"],
+      required: ["categoryName"],
     },
   },
   {
@@ -251,9 +257,9 @@ const clientTools = [
     parameters: {
       type: "object",
       properties: {
-        item_ids: { type: "array", items: { type: "integer" } },
+        itemIds: { type: "array", items: { type: "integer" } },
       },
-      required: ["item_ids"],
+      required: ["itemIds"],
     },
   },
   {
@@ -263,9 +269,9 @@ const clientTools = [
     parameters: {
       type: "object",
       properties: {
-        item_id: { type: "integer" },
+        itemId: { type: "integer" },
       },
-      required: ["item_id"],
+      required: ["itemId"],
     },
   },
   {
@@ -371,7 +377,7 @@ const agentsIndex = {
     {
       name: "BRGR Voice",
       config_path: "agent_configs/brgr-voice.json",
-      agent_id: null,
+      agent_id: existingAgentId,
     },
   ],
 };

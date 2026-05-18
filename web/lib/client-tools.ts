@@ -22,14 +22,15 @@ function asLanguage(value: unknown): Language {
 
 export function useRegisterClientTools(): void {
   useConversationClientTool("show_category", async (args: ToolArgs) => {
-    const categoryName = typeof args.category_name === "string" ? args.category_name : null;
+    const rawCategoryName = args.category_name ?? args.categoryName;
+    const categoryName = typeof rawCategoryName === "string" ? rawCategoryName : null;
     useBrgrStore.getState().setActiveCategory(categoryName);
 
     return categoryName ? `Showing ${categoryName}` : "Category not found";
   });
 
   useConversationClientTool("highlight_items", async (args: ToolArgs) => {
-    const itemIds = asNumberArray(args.item_ids);
+    const itemIds = asNumberArray(args.item_ids ?? args.itemIds);
     const store = useBrgrStore.getState();
 
     store.setHighlightedIds(itemIds);
@@ -46,7 +47,7 @@ export function useRegisterClientTools(): void {
   });
 
   useConversationClientTool("show_item_detail", async (args: ToolArgs) => {
-    const itemId = Number(args.item_id);
+    const itemId = Number(args.item_id ?? args.itemId);
     useBrgrStore.getState().setDetailItemId(Number.isFinite(itemId) ? itemId : null);
 
     return Number.isFinite(itemId) ? `Showing detail for item ${itemId}` : "Item not found";

@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { AudioWaveform, Loader2, Mic, PhoneOff } from "lucide-react";
 import { clsx } from "clsx";
-import { clearRemoteCart } from "@/lib/cart-api";
+import { BRGR_AGENT_ID } from "@/lib/agent-config";
 import { handleConversationMessage, extractConversationId } from "@/lib/conversation-events";
 import { copy } from "@/lib/i18n";
 import { useBrgrStore } from "@/lib/store";
@@ -13,8 +13,6 @@ type VoiceButtonProps = {
   className?: string;
   size?: "hero" | "compact";
 };
-
-const agentId = process.env.NEXT_PUBLIC_ELEVENLABS_AGENT_ID;
 
 export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
   const [isStarting, setIsStarting] = useState(false);
@@ -32,12 +30,6 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
       const conversationId = extractConversationId(event);
       if (conversationId) {
         setConversationId(conversationId);
-        void clearRemoteCart(conversationId)
-          .catch((error) => {
-            useBrgrStore
-              .getState()
-              .setCartSyncError(error instanceof Error ? error.message : "Could not reset cart");
-          });
       }
 
       setIsStarting(false);
@@ -105,7 +97,7 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
   const statusLabel = t[agentStatus] ?? t.idle;
 
   async function startConversation() {
-    if (!agentId) {
+    if (!BRGR_AGENT_ID) {
       setAgentError("Missing NEXT_PUBLIC_ELEVENLABS_AGENT_ID");
       return;
     }
@@ -119,7 +111,7 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
       conversation.startSession({
-        agentId,
+        agentId: BRGR_AGENT_ID,
         connectionType: "webrtc",
         overrides: {
           agent: {

@@ -1,6 +1,6 @@
 {
   "name": "add_to_cart",
-  "description": "Add an item to the customer's cart. Call this every time the customer agrees to add something. The menu_item_id MUST come from the menu data in the system prompt - never invent IDs.",
+  "description": "Add exactly one menu item type to the customer's cart. For multiple different items, call this tool once per distinct menu_item_id, then call view_cart to verify the real cart. The menu_item_id MUST come from the menu data in the system prompt - never invent IDs.",
   "type": "webhook",
   "method": "POST",
   "url": "https://brgr-tools.vercel.app/api/tools/add-to-cart",
@@ -10,11 +10,11 @@
   "parameters": {
     "type": "object",
     "properties": {
-      "conversation_id": {
+      "conversationId": {
         "type": "string",
         "description": "The ElevenLabs conversation ID. Use the system-injected {{conversation_id}} variable."
       },
-      "menu_item_id": {
+      "menuItemId": {
         "type": "integer",
         "description": "The numeric ID from the menu (e.g., 1101001 for Original Single)"
       },
@@ -32,11 +32,11 @@
             "type": "string",
             "description": "Optional bun choice."
           },
-          "add_ons": {
+          "addOns": {
             "type": "array",
             "items": {
               "type": "integer",
-              "description": "Value for add_ons_item."
+              "description": "Value for addOns_item."
             },
             "description": "Optional array of add-on item IDs from the add-ons list."
           }
@@ -48,8 +48,8 @@
       }
     },
     "required": [
-      "conversation_id",
-      "menu_item_id"
+      "conversationId",
+      "menuItemId"
     ],
     "description": "Object parameters."
   }

@@ -7,18 +7,18 @@
   "parameters": {
     "type": "object",
     "properties": {
-      "conversation_id": {
+      "conversationId": {
         "type": "string",
         "description": "The ElevenLabs conversation ID for this call."
       },
-      "line_id": {
+      "lineId": {
         "type": "string",
         "description": "The cart line ID returned by view_cart."
       }
     },
     "required": [
-      "conversation_id",
-      "line_id"
+      "conversationId",
+      "lineId"
     ],
     "description": "Object parameters."
   }

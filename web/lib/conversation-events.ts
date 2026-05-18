@@ -296,8 +296,9 @@ function normalizeRequestedModifiers(raw: unknown): CartModifiers | undefined {
     modifiers.bun = raw.bun.trim();
   }
 
-  if (Array.isArray(raw.add_ons)) {
-    const addOns = raw.add_ons
+  const rawAddOns = raw.add_ons ?? raw.addOns;
+  if (Array.isArray(rawAddOns)) {
+    const addOns = rawAddOns
       .map((rawId) => Number(rawId))
       .filter((id) => Number.isFinite(id))
       .map((id) => extrasAddons.find((item) => item.id === id))
@@ -368,7 +369,7 @@ function mirrorOptimisticAdd(event: ToolEvent, parameters: unknown): boolean {
     return false;
   }
 
-  const menuItemId = Number(parameters.menu_item_id);
+  const menuItemId = Number(parameters.menu_item_id ?? parameters.menuItemId);
   const quantity = Number(parameters.quantity ?? 1);
   const item = findMenuItem(menuItemId);
 
@@ -389,6 +390,19 @@ function mirrorOptimisticAdd(event: ToolEvent, parameters: unknown): boolean {
 
   useBrgrStore.getState().upsertCartLine(line);
   return true;
+}
+
+function rememberOptimisticLine(line: CartLine): void {
+  const now = Date.now();
+  cleanupRecentOptimisticAdds(now);
+  recentOptimisticAdds.set(
+    JSON.stringify({
+      menu_item_id: line.menu_item_id,
+      menuItemId: line.menu_item_id,
+      quantity: line.quantity,
+    }),
+    now,
+  );
 }
 
 function normalizeForMatch(value: string): string {
@@ -426,47 +440,69 @@ function parseConfirmedQuantity(text: string, unitPrice: number): number {
   return 1;
 }
 
+function findMentionedMenuItems(text: string): typeof menuItems {
+  const normalizedText = normalizeForMatch(text);
+
+  return [...menuItems]
+    .sort((left, right) => right.name.length - left.name.length)
+    .filter((candidate) => normalizedText.includes(normalizeForMatch(candidate.name)));
+}
+
 function mirrorTranscriptAdd(text: string): void {
   if (!looksLikeAddConfirmation(text)) {
     return;
   }
 
-  const normalizedText = normalizeForMatch(text);
-  const item = [...menuItems]
-    .sort((left, right) => right.name.length - left.name.length)
-    .find((candidate) => normalizedText.includes(normalizeForMatch(candidate.name)));
-
-  if (!item) {
+  const items = findMentionedMenuItems(text);
+  if (!items.length) {
     return;
   }
 
-  const quantity = parseConfirmedQuantity(text, item.price_egp);
-  const line: CartLine = {
-    line_id: makePendingLineId(),
-    menu_item_id: item.id,
-    name: item.name,
-    quantity,
-    unit_price: item.price_egp,
-  };
+  const addedLines: CartLine[] = [];
 
-  const event: ToolEvent = {
-    name: "add_to_cart",
-    parameters: { menu_item_id: item.id, quantity },
-    raw: { id: `transcript:${normalizeForMatch(text)}` },
-  };
+  for (const item of items) {
+    const quantity = parseConfirmedQuantity(text, item.price_egp);
+    const line: CartLine = {
+      line_id: makePendingLineId(),
+      menu_item_id: item.id,
+      name: item.name,
+      quantity,
+      unit_price: item.price_egp,
+    };
 
-  if (!shouldMirrorOptimisticAdd(event, event.parameters)) {
-    return;
+    const event: ToolEvent = {
+      name: "add_to_cart",
+      parameters: { menuItemId: item.id, quantity },
+      raw: { id: `transcript:${normalizeForMatch(text)}:${item.id}` },
+    };
+
+    if (!shouldMirrorOptimisticAdd(event, event.parameters)) {
+      continue;
+    }
+
+    const alreadyInCart = useBrgrStore.getState().cart.lines.some((existing) => isSameCartRequest(existing, line));
+
+    if (!alreadyInCart) {
+      useBrgrStore.getState().upsertCartLine(line);
+      rememberOptimisticLine(line);
+      addedLines.push(line);
+    }
   }
 
-  useBrgrStore.getState().upsertCartLine(line);
-  scheduleCartSync();
+  if (addedLines.length) {
+    scheduleCartSync();
+  }
 }
 
 function mirrorToolEvent(event: ToolEvent): void {
   const store = useBrgrStore.getState();
   const response = unwrapResult(event.response ?? event.raw);
   const parameters = parseMaybeJson(event.parameters);
+  const eventConversationId = extractConversationId(parameters) ?? extractConversationId(response) ?? extractConversationId(event.raw);
+
+  if (eventConversationId) {
+    store.setConversationId(eventConversationId);
+  }
 
   if (event.name === "view_cart") {
     const cart = normalizeCart(response);
@@ -484,24 +520,25 @@ function mirrorToolEvent(event: ToolEvent): void {
       store.upsertCartLine(response.line, safeTotal);
     }
 
-    scheduleCartSync();
+    scheduleCartSync(600, eventConversationId);
     return;
   }
 
   if (event.name === "add_to_cart" && mirrorOptimisticAdd(event, parameters)) {
-    scheduleCartSync();
+    scheduleCartSync(600, eventConversationId);
     return;
   }
 
   if (event.name === "remove_from_cart") {
-    const lineId = isRecord(parameters) && typeof parameters.line_id === "string" ? parameters.line_id : null;
+    const rawLineId = isRecord(parameters) ? parameters.line_id ?? parameters.lineId : null;
+    const lineId = typeof rawLineId === "string" ? rawLineId : null;
     const total = isRecord(response) ? Number(response.cart_total_egp) : undefined;
 
     if (lineId) {
       store.removeCartLine(lineId, Number.isFinite(total) ? total : undefined);
     }
 
-    scheduleCartSync();
+    scheduleCartSync(600, eventConversationId);
     return;
   }
 
@@ -510,7 +547,7 @@ function mirrorToolEvent(event: ToolEvent): void {
     return;
   }
 
-  scheduleCartSync();
+  scheduleCartSync(600, eventConversationId);
 }
 
 export function handleConversationMessage(message: unknown): void {

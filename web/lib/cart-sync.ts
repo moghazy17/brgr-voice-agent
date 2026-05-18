@@ -5,24 +5,25 @@ import { useBrgrStore } from "./store";
 
 let syncTimer: ReturnType<typeof setTimeout> | null = null;
 
-export function scheduleCartSync(delayMs = 600): void {
+export function scheduleCartSync(delayMs = 600, requestedConversationId?: string | null): void {
   if (syncTimer) {
     clearTimeout(syncTimer);
   }
 
   syncTimer = setTimeout(async () => {
     const { conversationId, setCart, setCartSyncError } = useBrgrStore.getState();
+    const syncConversationId = requestedConversationId || conversationId;
 
     if (process.env.NODE_ENV !== "production") {
-      console.log("[brgr][scheduleCartSync] firing", { conversationId });
+      console.log("[brgr][scheduleCartSync] firing", { conversationId: syncConversationId });
     }
 
-    if (!conversationId) {
+    if (!syncConversationId) {
       return;
     }
 
     try {
-      const cart = await viewCart(conversationId);
+      const cart = await viewCart(syncConversationId);
       if (process.env.NODE_ENV !== "production") {
         console.log("[brgr][scheduleCartSync] viewCart result", cart);
       }

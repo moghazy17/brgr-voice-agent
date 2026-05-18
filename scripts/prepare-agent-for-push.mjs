@@ -6,16 +6,23 @@ const arabicVoiceId = "JHdGl5PsEzushIzzVSd1";
 
 const descriptions = {
   conversation_id: "The ElevenLabs conversation ID for this call.",
+  conversationId: "The ElevenLabs conversation ID for this call.",
   menu_item_id: "The numeric BRGR menu item ID from the system prompt.",
+  menuItemId: "The numeric BRGR menu item ID from the system prompt.",
   quantity: "How many of this item to add. Use 1 if unspecified.",
   modifiers: "Optional item modifications such as bun choice or add-ons.",
   bun: "Optional bun choice.",
   add_ons: "Optional array of add-on item IDs from the add-ons list.",
+  addOns: "Optional array of add-on item IDs from the add-ons list.",
   notes: "Optional kitchen notes.",
   line_id: "The cart line ID returned by view_cart.",
+  lineId: "The cart line ID returned by view_cart.",
   category_name: "The exact menu category name to show.",
+  categoryName: "The exact menu category name to show.",
   item_ids: "Array of BRGR menu item IDs to highlight.",
+  itemIds: "Array of BRGR menu item IDs to highlight.",
   item_id: "BRGR menu item ID to show in detail.",
+  itemId: "BRGR menu item ID to show in detail.",
   language: "UI language code, en or ar.",
 };
 

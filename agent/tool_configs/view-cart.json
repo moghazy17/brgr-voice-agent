@@ -7,13 +7,13 @@
   "parameters": {
     "type": "object",
     "properties": {
-      "conversation_id": {
+      "conversationId": {
         "type": "string",
         "description": "The ElevenLabs conversation ID for this call."
       }
     },
     "required": [
-      "conversation_id"
+      "conversationId"
     ],
     "description": "Object parameters."
   }

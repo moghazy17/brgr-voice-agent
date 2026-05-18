@@ -83,6 +83,27 @@ function normalizeModifiers(raw: unknown): ModifierResult {
     normalized.add_ons = addOns;
   }
 
+  if (Array.isArray(modifiers.addOns)) {
+    const addOns: CartModifierLine[] = [];
+
+    for (const rawId of modifiers.addOns) {
+      const addOnId = Number(rawId);
+      const item = getAddOnById(addOnId);
+
+      if (!item) {
+        return { error: `Add-on ${rawId} not found in menu` };
+      }
+
+      addOns.push({
+        menu_item_id: item.id,
+        name: item.name,
+        unit_price: item.price_egp,
+      });
+    }
+
+    normalized.add_ons = addOns;
+  }
+
   return { modifiers: Object.keys(normalized).length ? normalized : undefined };
 }
 
@@ -91,12 +112,13 @@ function modifierTotal(modifiers?: CartModifiers): number {
 }
 
 function getConversationId(payload: Record<string, unknown>): string {
-  return typeof payload.conversation_id === "string" ? payload.conversation_id.trim() : "";
+  const value = payload.conversation_id ?? payload.conversationId;
+  return typeof value === "string" ? value.trim() : "";
 }
 
 function handleAddToCart(payload: Record<string, unknown>): Response {
   const conversationId = getConversationId(payload);
-  const menuItemId = Number(payload.menu_item_id);
+  const menuItemId = Number(payload.menu_item_id ?? payload.menuItemId);
   const quantity = payload.quantity === undefined ? 1 : Number(payload.quantity);
 
   if (!conversationId) {
@@ -167,7 +189,8 @@ function handleViewCart(payload: Record<string, unknown>): Response {
 
 function handleRemoveFromCart(payload: Record<string, unknown>): Response {
   const conversationId = getConversationId(payload);
-  const lineId = typeof payload.line_id === "string" ? payload.line_id.trim() : "";
+  const rawLineId = payload.line_id ?? payload.lineId;
+  const lineId = typeof rawLineId === "string" ? rawLineId.trim() : "";
 
   if (!conversationId) {
     return jsonResponse({ success: false, error: "conversation_id is required" }, 400);
