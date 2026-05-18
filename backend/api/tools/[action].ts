@@ -94,10 +94,6 @@ function getConversationId(payload: Record<string, unknown>): string {
   return typeof payload.conversation_id === "string" ? payload.conversation_id.trim() : "";
 }
 
-function isEgyptianPhone(phone: string): boolean {
-  return /^01[0125]\d{8}$/.test(phone);
-}
-
 function handleAddToCart(payload: Record<string, unknown>): Response {
   const conversationId = getConversationId(payload);
   const menuItemId = Number(payload.menu_item_id);
@@ -198,23 +194,29 @@ function handleRemoveFromCart(payload: Record<string, unknown>): Response {
   });
 }
 
-function handleSubmitOrder(payload: Record<string, unknown>): Response {
+function handleClearCart(payload: Record<string, unknown>): Response {
   const conversationId = getConversationId(payload);
-  const customerName = typeof payload.customer_name === "string" ? payload.customer_name.trim() : "";
-  const phone = typeof payload.phone === "string" ? payload.phone.trim() : "";
-  const address = typeof payload.address === "string" ? payload.address.trim() : "";
-  const paymentMethod = typeof payload.payment_method === "string" ? payload.payment_method : "cash";
 
   if (!conversationId) {
     return jsonResponse({ success: false, error: "conversation_id is required" }, 400);
   }
 
-  if (!customerName || !phone || !address) {
-    return jsonResponse({ success: false, error: "customer_name, phone, and address are required" }, 400);
-  }
+  clearCart(conversationId);
 
-  if (!isEgyptianPhone(phone)) {
-    return jsonResponse({ success: false, error: "Phone must be 11 digits starting with 010, 011, 012, or 015" });
+  return jsonResponse({
+    success: true,
+    lines: [],
+    total_egp: 0,
+    line_count: 0,
+  });
+}
+
+function handleSubmitOrder(payload: Record<string, unknown>): Response {
+  const conversationId = getConversationId(payload);
+  const paymentMethod = typeof payload.payment_method === "string" ? payload.payment_method : "cash";
+
+  if (!conversationId) {
+    return jsonResponse({ success: false, error: "conversation_id is required" }, 400);
   }
 
   if (!["cash", "card", "online"].includes(paymentMethod)) {
@@ -234,9 +236,6 @@ function handleSubmitOrder(payload: Record<string, unknown>): Response {
     JSON.stringify({
       order_number: orderNumber,
       conversation_id: conversationId,
-      customer_name: customerName,
-      phone,
-      address,
       payment_method: paymentMethod,
       total_egp: total,
       lines: cart.lines.map(serializeCartLine),
@@ -272,6 +271,8 @@ export default async function handler(req: Request): Promise<Response> {
       return handleViewCart(payload);
     case "remove-from-cart":
       return handleRemoveFromCart(payload);
+    case "clear-cart":
+      return handleClearCart(payload);
     case "submit-order":
       return handleSubmitOrder(payload);
     default:

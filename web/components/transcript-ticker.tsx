@@ -9,6 +9,7 @@ type TranscriptTickerProps = {
   messages: TranscriptMessage[];
   language: Language;
   active: boolean;
+  variant?: "floating" | "sidebar";
 };
 
 const roleCopy: Record<Language, Record<"user" | "agent", string>> = {
@@ -16,9 +17,24 @@ const roleCopy: Record<Language, Record<"user" | "agent", string>> = {
   ar: { user: "أنت", agent: "BRGR" },
 };
 
-export function TranscriptTicker({ messages, language, active }: TranscriptTickerProps) {
-  const latest = messages.filter((message) => message.role !== "tool").slice(-2);
+function pickLatestPerRole(messages: TranscriptMessage[]): TranscriptMessage[] {
+  let lastUser: TranscriptMessage | undefined;
+  let lastAgent: TranscriptMessage | undefined;
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const m = messages[i];
+    if (!lastUser && m.role === "user") lastUser = m;
+    else if (!lastAgent && m.role === "agent") lastAgent = m;
+    if (lastUser && lastAgent) break;
+  }
+  return [lastUser, lastAgent]
+    .filter((m): m is TranscriptMessage => Boolean(m))
+    .sort((a, b) => a.timestamp - b.timestamp);
+}
+
+export function TranscriptTicker({ messages, language, active, variant = "floating" }: TranscriptTickerProps) {
+  const latest = pickLatestPerRole(messages);
   const visible = active && latest.length > 0;
+  const isSidebar = variant === "sidebar";
 
   return (
     <AnimatePresence>
@@ -27,26 +43,43 @@ export function TranscriptTicker({ messages, language, active }: TranscriptTicke
           key="transcript"
           aria-live="polite"
           dir={language === "ar" ? "rtl" : "ltr"}
-          initial={{ opacity: 0, y: 24, scale: 0.96 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 16, scale: 0.97 }}
+          initial={isSidebar ? { opacity: 0, y: -8 } : { opacity: 0, y: 24, scale: 0.96 }}
+          animate={isSidebar ? { opacity: 1, y: 0 } : { opacity: 1, y: 0, scale: 1 }}
+          exit={isSidebar ? { opacity: 0, y: -4 } : { opacity: 0, y: 16, scale: 0.97 }}
           transition={{ duration: 0.28, ease: [0.2, 0.7, 0.2, 1] }}
-          className="pointer-events-none w-[min(92vw,38rem)]"
+          className={clsx(
+            isSidebar ? "w-full shrink-0" : "pointer-events-none w-[min(92vw,38rem)]",
+          )}
         >
-          <div className="pointer-events-auto relative overflow-hidden rounded-[18px] border-[3px] border-brgr-ink bg-brgr-cream shadow-[8px_8px_0_0_#1A1410]">
+          <div
+            className={clsx(
+              "relative overflow-hidden rounded-[18px] border-[3px] border-brgr-ink bg-brgr-cream",
+              isSidebar ? "shadow-chip" : "pointer-events-auto shadow-[8px_8px_0_0_#1A1410]",
+            )}
+          >
             {/* Receipt header */}
-            <div className="flex items-center justify-between border-b-2 border-dashed border-brgr-ink/40 bg-brgr-mustard px-4 py-2">
+            <div
+              className={clsx(
+                "flex items-center justify-between border-b-2 border-dashed border-brgr-ink/40 bg-brgr-mustard",
+                isSidebar ? "px-3 py-1.5" : "px-4 py-2",
+              )}
+            >
               <span className="flex items-center gap-2 text-[10px] font-black uppercase tracking-[0.25em] text-brgr-ink">
                 <Radio className="h-3.5 w-3.5 animate-pulse text-brgr-red" aria-hidden />
-                {language === "ar" ? "بث مباشر" : "Live transcript"}
+                {language === "ar" ? "بث مباشر" : "Live conversation"}
               </span>
               <span className="font-mono text-[10px] font-bold text-brgr-ink/70">
-                {language === "ar" ? "اخر رسالتين" : "LAST 2"}
+                {language === "ar" ? "المحادثة" : "CONVO"}
               </span>
             </div>
 
             {/* Lines */}
-            <ul className="divide-y-2 divide-dashed divide-brgr-ink/15 bg-brgr-cream">
+            <ul
+              className={clsx(
+                "divide-y-2 divide-dashed divide-brgr-ink/15 bg-brgr-cream",
+                isSidebar ? "" : "max-h-[34vh] overflow-y-auto",
+              )}
+            >
               <AnimatePresence initial={false}>
                 {latest.map((message) => (
                   <motion.li
@@ -56,7 +89,10 @@ export function TranscriptTicker({ messages, language, active }: TranscriptTicke
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, height: 0 }}
                     transition={{ duration: 0.22 }}
-                    className="flex items-start gap-3 px-4 py-3"
+                    className={clsx(
+                      "flex items-start gap-3",
+                      isSidebar ? "px-3 py-2" : "px-4 py-3",
+                    )}
                   >
                     <span
                       className={clsx(
@@ -71,7 +107,8 @@ export function TranscriptTicker({ messages, language, active }: TranscriptTicke
                     </span>
                     <p
                       className={clsx(
-                        "min-w-0 flex-1 text-[15px] font-semibold leading-snug text-brgr-ink",
+                        "min-w-0 flex-1 font-semibold leading-snug text-brgr-ink",
+                        isSidebar ? "text-[13px] line-clamp-3" : "text-[15px]",
                         language === "ar" && "font-arabic",
                       )}
                     >
@@ -82,17 +119,19 @@ export function TranscriptTicker({ messages, language, active }: TranscriptTicke
               </AnimatePresence>
             </ul>
 
-            {/* Receipt zigzag bottom */}
-            <div
-              aria-hidden
-              className="h-3"
-              style={{
-                background:
-                  "linear-gradient(-45deg, transparent 33.33%, #FFF6E5 33.33%, #FFF6E5 66.66%, transparent 66.66%), linear-gradient(45deg, transparent 33.33%, #FFF6E5 33.33%, #FFF6E5 66.66%, transparent 66.66%)",
-                backgroundSize: "12px 12px",
-                backgroundColor: "#1A1410",
-              }}
-            />
+            {/* Receipt zigzag bottom (floating only) */}
+            {isSidebar ? null : (
+              <div
+                aria-hidden
+                className="h-3"
+                style={{
+                  background:
+                    "linear-gradient(-45deg, transparent 33.33%, #FFF6E5 33.33%, #FFF6E5 66.66%, transparent 66.66%), linear-gradient(45deg, transparent 33.33%, #FFF6E5 33.33%, #FFF6E5 66.66%, transparent 66.66%)",
+                  backgroundSize: "12px 12px",
+                  backgroundColor: "#1A1410",
+                }}
+              />
+            )}
           </div>
         </motion.section>
       ) : null}

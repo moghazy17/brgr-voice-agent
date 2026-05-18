@@ -1,7 +1,8 @@
 import { readFile, writeFile } from "node:fs/promises";
 
 const backendUrl = "https://brgr-tools.vercel.app";
-const voiceId = "JHdGl5PsEzushIzzVSd1";
+const englishVoiceId = "JBFqnCBsd6RMkjVDRZzb";
+const arabicVoiceId = "JHdGl5PsEzushIzzVSd1";
 
 const descriptions = {
   conversation_id: "The ElevenLabs conversation ID for this call.",
@@ -12,10 +13,6 @@ const descriptions = {
   add_ons: "Optional array of add-on item IDs from the add-ons list.",
   notes: "Optional kitchen notes.",
   line_id: "The cart line ID returned by view_cart.",
-  customer_name: "The customer name for the order.",
-  phone: "Egyptian phone number, 11 digits starting with 010, 011, 012, or 015.",
-  address: "The delivery address.",
-  payment_method: "Payment method for the order.",
   category_name: "The exact menu category name to show.",
   item_ids: "Array of BRGR menu item IDs to highlight.",
   item_id: "BRGR menu item ID to show in detail.",
@@ -73,9 +70,40 @@ async function writeJson(path, value) {
 const agentPath = "agent/agent_configs/brgr-voice.json";
 const agentConfig = await readJson(agentPath);
 
-agentConfig.conversation_config.agent.language = "ar";
-agentConfig.conversation_config.tts.voice_id = voiceId;
-delete agentConfig.conversation_config.agent.prompt.built_in_tools;
+agentConfig.conversation_config.agent.language = "en";
+agentConfig.conversation_config.agent.first_message = "Hey, welcome to BRGR! What can I get started for you today?";
+agentConfig.conversation_config.agent.disable_first_message_interruptions = true;
+agentConfig.conversation_config.tts.voice_id = englishVoiceId;
+agentConfig.conversation_config.tts.model_id = "eleven_turbo_v2";
+agentConfig.conversation_config.conversation = {
+  ...(agentConfig.conversation_config.conversation ?? {}),
+  client_events: ["audio", "user_transcript", "agent_response"],
+};
+agentConfig.conversation_config.language_presets = {
+  ...(agentConfig.conversation_config.language_presets ?? {}),
+  ar: {
+    overrides: {
+      agent: {
+        first_message: "أهلاً، إيه اللي تحب تطلبه النهارده؟",
+      },
+      tts: {
+        model_id: "eleven_turbo_v2_5",
+        voice_id: arabicVoiceId,
+      },
+    },
+  },
+};
+agentConfig.conversation_config.agent.prompt.built_in_tools = {
+  end_call: {
+    name: "end_call",
+    type: "system",
+    params: {
+      system_tool_type: "end_call",
+    },
+    description:
+      "End the call after a completed order, after the customer says goodbye, or when the customer clearly says they are done.",
+  },
+};
 
 for (const tool of agentConfig.conversation_config.agent.prompt.tools) {
   if (tool.type === "webhook") {

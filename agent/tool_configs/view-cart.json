@@ -1,6 +1,6 @@
 {
   "name": "view_cart",
-  "description": "Return the current cart contents and total. Call before reciting the order to the customer.",
+  "description": "Return the current cart contents. Use totals silently unless the customer asks for price or total.",
   "type": "webhook",
   "method": "POST",
   "url": "https://brgr-tools.vercel.app/api/tools/view-cart",

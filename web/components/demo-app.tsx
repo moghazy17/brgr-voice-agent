@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { Globe } from "lucide-react";
 import { motion } from "framer-motion";
 import { CartSidebar } from "@/components/cart-sidebar";
@@ -31,9 +32,18 @@ export function DemoApp() {
   const setDetailItemId = useBrgrStore((state) => state.setDetailItemId);
   const setCart = useBrgrStore((state) => state.setCart);
   const removeCartLine = useBrgrStore((state) => state.removeCartLine);
+  const clearCart = useBrgrStore((state) => state.clearCart);
+  const clearTranscript = useBrgrStore((state) => state.clearTranscript);
+  const setConversationId = useBrgrStore((state) => state.setConversationId);
   const setCartSyncError = useBrgrStore((state) => state.setCartSyncError);
   const t = copy[language];
   const isActive = agentStatus !== "idle";
+
+  useEffect(() => {
+    clearCart();
+    clearTranscript();
+    setConversationId(null);
+  }, [clearCart, clearTranscript, setConversationId]);
 
   async function handleRemoveLine(lineId: string) {
     if (!conversationId) {
@@ -51,6 +61,10 @@ export function DemoApp() {
   }
 
   function handleLanguageChange(nextLanguage: Language) {
+    if (isActive) {
+      return;
+    }
+
     setLanguage(nextLanguage);
   }
 
@@ -61,7 +75,7 @@ export function DemoApp() {
 
   return (
     <main
-      className={`relative min-h-screen overflow-x-hidden pb-[260px] md:pb-[280px] ${language === "ar" ? "font-arabic" : ""}`}
+      className={`relative min-h-screen overflow-x-clip pb-[260px] md:pb-10 ${language === "ar" ? "font-arabic" : ""}`}
       dir={language === "ar" ? "rtl" : "ltr"}
     >
       {/* HEADER — bold diner signage */}
@@ -69,8 +83,8 @@ export function DemoApp() {
         <div className="halftone-mustard h-1.5" aria-hidden />
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 sm:px-6 lg:px-8">
           <div className="flex min-w-0 items-center gap-3">
-            <span className="grid h-11 w-11 place-items-center rounded-full border-[3px] border-brgr-ink bg-brgr-red text-brgr-cream shadow-chip">
-              <span className="font-display text-2xl leading-none">B</span>
+            <span className="grid h-14 w-14 shrink-0 place-items-center overflow-hidden rounded-full border-[3px] border-brgr-ink bg-brgr-red shadow-chip sm:h-16 sm:w-16">
+              <img src="/brgr-logo.svg" alt="BRGR" className="h-11 w-11 sm:h-12 sm:w-12" />
             </span>
             <div className="flex flex-col leading-none">
               <span className="font-display text-3xl tracking-tight text-brgr-ink sm:text-4xl">
@@ -82,7 +96,7 @@ export function DemoApp() {
             </div>
           </div>
 
-          <LanguageSwitch language={language} onChange={handleLanguageChange} label={t.language} />
+          <LanguageSwitch language={language} onChange={handleLanguageChange} label={t.language} disabled={isActive} />
         </div>
       </header>
 
@@ -143,7 +157,7 @@ export function DemoApp() {
       </div>
 
       {/* MAIN GRID */}
-      <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 md:grid-cols-[minmax(0,1fr)_22rem] lg:px-8">
+      <div className="mx-auto grid max-w-7xl gap-5 px-4 py-6 sm:px-6 md:grid-cols-[minmax(0,1fr)_19rem] lg:px-8">
         <MenuGrid
           categories={categories}
           activeCategory={activeCategory}
@@ -153,20 +167,36 @@ export function DemoApp() {
           onItemSelect={setDetailItemId}
         />
 
-        <aside className="md:sticky md:top-24 md:h-[calc(100vh-7rem)]">
-          <CartSidebar cart={cart} language={language} onRemoveLine={handleRemoveLine} />
+        <aside className="relative z-30 flex flex-col gap-3 md:sticky md:top-24 md:h-[calc(100vh-7rem)]">
+          <div className="hidden md:block">
+            <TranscriptTicker
+              messages={transcript}
+              language={language}
+              active={isActive}
+              variant="sidebar"
+            />
+          </div>
+          <div className="min-h-0 flex-1 md:max-h-[58vh]">
+            <CartSidebar cart={cart} language={language} onRemoveLine={handleRemoveLine} />
+          </div>
+
+          {/* Desktop: orb tucked under the cart */}
+          <div className="hidden md:flex justify-end pt-2 pr-2">
+            <VoiceButton />
+          </div>
         </aside>
       </div>
 
-      {/* ============ FLOATING VOICE DOCK ============ */}
+      {/* ============ MOBILE FLOATING VOICE DOCK ============ */}
       <div
-        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-4 px-4 pb-6 sm:pb-8"
+        className="pointer-events-none fixed inset-x-0 bottom-0 z-40 flex flex-col items-center gap-4 px-4 pb-6 sm:pb-8 md:hidden"
         dir={language === "ar" ? "rtl" : "ltr"}
       >
-        <TranscriptTicker messages={transcript} language={language} active={isActive} />
+        <div className="w-full flex justify-center">
+          <TranscriptTicker messages={transcript} language={language} active={isActive} />
+        </div>
 
         <div className="pointer-events-auto relative">
-          {/* Shadow plate */}
           <div
             aria-hidden
             className="absolute -inset-x-12 -inset-y-2 -z-10 rounded-[100%] bg-brgr-cream/95 blur-md"
@@ -184,10 +214,12 @@ function LanguageSwitch({
   language,
   onChange,
   label,
+  disabled,
 }: {
   language: Language;
   onChange: (next: Language) => void;
   label: string;
+  disabled?: boolean;
 }) {
   const isAr = language === "ar";
   const next: Language = isAr ? "en" : "ar";
@@ -197,9 +229,10 @@ function LanguageSwitch({
       type="button"
       role="switch"
       aria-checked={isAr}
+      disabled={disabled}
       aria-label={`${label}: ${isAr ? "العربية" : "English"}`}
       onClick={() => onChange(next)}
-      className="relative grid h-10 grid-cols-2 items-center overflow-hidden rounded-full border-[3px] border-brgr-ink bg-brgr-cream shadow-chip transition active:translate-y-[1px] active:shadow-none"
+      className="relative grid h-10 grid-cols-2 items-center overflow-hidden rounded-full border-[3px] border-brgr-ink bg-brgr-cream shadow-chip transition enabled:active:translate-y-[1px] enabled:active:shadow-none disabled:cursor-not-allowed disabled:opacity-60"
       style={{ width: 124 }}
     >
       <motion.span

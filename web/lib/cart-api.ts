@@ -33,3 +33,7 @@ export async function removeLine(conversationId: string, lineId: string): Promis
     line_id: lineId,
   });
 }
+
+export async function clearRemoteCart(conversationId: string): Promise<CartState> {
+  return postTool<CartState>("clear-cart", { conversation_id: conversationId });
+}

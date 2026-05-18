@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useConversation } from "@elevenlabs/react";
 import { AudioWaveform, Loader2, Mic, PhoneOff } from "lucide-react";
 import { clsx } from "clsx";
+import { clearRemoteCart } from "@/lib/cart-api";
 import { handleConversationMessage, extractConversationId } from "@/lib/conversation-events";
 import { copy } from "@/lib/i18n";
 import { useBrgrStore } from "@/lib/store";
-import type { Language } from "@/lib/types";
 
 type VoiceButtonProps = {
   className?: string;
@@ -24,6 +24,7 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
   const setAgentError = useBrgrStore((state) => state.setAgentError);
   const setConversationId = useBrgrStore((state) => state.setConversationId);
   const clearCart = useBrgrStore((state) => state.clearCart);
+  const clearTranscript = useBrgrStore((state) => state.clearTranscript);
   const t = copy[language];
 
   const conversation = useConversation({
@@ -31,6 +32,12 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
       const conversationId = extractConversationId(event);
       if (conversationId) {
         setConversationId(conversationId);
+        void clearRemoteCart(conversationId)
+          .catch((error) => {
+            useBrgrStore
+              .getState()
+              .setCartSyncError(error instanceof Error ? error.message : "Could not reset cart");
+          });
       }
 
       setIsStarting(false);
@@ -80,61 +87,6 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
   // ElevenLabs picks up the new language preset (and plays its welcome).
   // Cart is keyed by conversation_id on the backend, so it resets — user
   // confirmed this trade-off in favor of hearing the per-language welcome.
-  const lastLanguageRef = useRef<Language>(language);
-  const pendingRestartRef = useRef(false);
-  useEffect(() => {
-    if (lastLanguageRef.current === language) {
-      return;
-    }
-    lastLanguageRef.current = language;
-
-    if (!isConnected || !agentId) {
-      return;
-    }
-
-    pendingRestartRef.current = true;
-    setAgentStatus("connecting");
-    setAgentError(null);
-    clearCart();
-    setConversationId(null);
-    conversation.endSession();
-  }, [language, isConnected, conversation, setAgentStatus, setAgentError, clearCart, setConversationId]);
-
-  // After the disconnect from a language-toggle restart completes, kick off
-  // a fresh session with the new language override.
-  useEffect(() => {
-    if (!pendingRestartRef.current || isConnected || isStarting) {
-      return;
-    }
-    pendingRestartRef.current = false;
-
-    if (!agentId) {
-      return;
-    }
-
-    setIsStarting(true);
-    setAgentError(null);
-
-    (async () => {
-      try {
-        await navigator.mediaDevices.getUserMedia({ audio: true });
-        conversation.startSession({
-          agentId,
-          connectionType: "webrtc",
-          overrides: {
-            agent: {
-              language,
-            },
-          },
-        });
-      } catch (error) {
-        setIsStarting(false);
-        setAgentStatus("idle");
-        setAgentError(error instanceof Error ? error.message : t.agentError);
-      }
-    })();
-  }, [isConnected, isStarting, language, conversation, setAgentError, setAgentStatus, t.agentError]);
-
   useEffect(() => {
     if (isStarting) {
       setAgentStatus("connecting");
@@ -142,10 +94,6 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
     }
 
     if (!isConnected) {
-      if (pendingRestartRef.current) {
-        setAgentStatus("connecting");
-        return;
-      }
       setAgentStatus("idle");
       return;
     }
@@ -164,6 +112,9 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
 
     setIsStarting(true);
     setAgentError(null);
+    setConversationId(null);
+    clearCart();
+    clearTranscript();
 
     try {
       await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -225,6 +176,8 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
     );
   }
 
+  const isBusy = isStarting || agentStatus === "connecting";
+
   return (
     <button
       type="button"
@@ -241,32 +194,57 @@ export function VoiceButton({ className, size = "hero" }: VoiceButtonProps) {
       <span className={clsx("orb-ring delay-2", ringState)} aria-hidden />
       <span className={clsx("orb-ring delay-3", ringState)} aria-hidden />
 
-      {/* Outer ring */}
+      {/* Soft halo behind the robot — colored by state */}
       <span
         className={clsx(
-          "absolute inset-0 rounded-full border-[3px] border-brgr-ink transition",
-          isActive ? "bg-brgr-red" : "bg-brgr-ink",
+          "absolute inset-2 rounded-full transition-all duration-300",
+          isActive
+            ? "bg-brgr-red/25 shadow-[0_0_40px_8px_rgba(214,40,40,0.55)]"
+            : "bg-brgr-mustard/25 shadow-[0_0_28px_4px_rgba(244,194,53,0.45)]",
+          agentStatus === "speaking" && "animate-pulse",
         )}
         aria-hidden
       />
 
-      {/* Glow orb */}
+      {/* Robot — the orb */}
       <span
         className={clsx(
-          "relative z-10 grid h-[112px] w-[112px] place-items-center rounded-full orb-glow",
-          isActive && "is-active",
-          agentStatus === "speaking" && "animate-pulse",
+          "relative z-10 grid h-[140px] w-[140px] place-items-center transition-transform duration-300",
+          isActive ? "scale-[1.02]" : "group-hover:-translate-y-0.5",
         )}
       >
-        <span className="grid h-[78px] w-[78px] place-items-center rounded-full border-2 border-brgr-ink bg-brgr-cream text-brgr-ink shadow-inner">
-          <Icon className={clsx("h-10 w-10", Icon === Loader2 && "animate-spin")} aria-hidden />
-        </span>
+        <img
+          src="/robot.png"
+          alt=""
+          aria-hidden
+          draggable={false}
+          className={clsx(
+            "h-full w-full select-none object-contain transition",
+            isActive
+              ? "drop-shadow-[0_6px_18px_rgba(214,40,40,0.55)]"
+              : "drop-shadow-[0_6px_14px_rgba(26,20,16,0.45)]",
+            agentStatus === "speaking" && "animate-bounce",
+          )}
+        />
+
+        {/* Status icon overlay — only while busy / call active */}
+        {isBusy || isConnected ? (
+          <span
+            className={clsx(
+              "absolute -top-1 -right-1 grid h-8 w-8 place-items-center rounded-full border-2 border-brgr-ink shadow-chip",
+              isConnected ? "bg-brgr-red text-brgr-cream" : "bg-brgr-mustard text-brgr-ink",
+            )}
+            aria-hidden
+          >
+            <Icon className={clsx("h-4 w-4", Icon === Loader2 && "animate-spin")} />
+          </span>
+        ) : null}
       </span>
 
       {/* Status pill */}
       <span
         className={clsx(
-          "absolute -bottom-5 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full border-2 border-brgr-ink px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] shadow-chip",
+          "absolute -bottom-3 left-1/2 z-20 -translate-x-1/2 whitespace-nowrap rounded-full border-2 border-brgr-ink px-3 py-1 text-[10px] font-black uppercase tracking-[0.18em] shadow-chip",
           isActive ? "bg-brgr-red text-brgr-cream" : "bg-brgr-mustard text-brgr-ink",
         )}
       >

@@ -59,14 +59,15 @@ const systemPrompt = `You are a friendly, energetic order-taker for BRGR - a pop
 
 # Language
 
-You handle both English and Egyptian Arabic, including code-switching ("ya3ni I want a burger" or "عايز Original Single").
+You handle English by default, with Egyptian Arabic available only when the conversation starts in Arabic.
 
-- Detect the language of the user's first turn. Match it.
-- If the user switches mid-conversation, you switch too - naturally, no announcement.
+- The selected conversation language is fixed for the entire call.
+- Do not change your spoken language mid-conversation, even if the user switches languages or asks you to switch.
+- If the conversation started in English, keep replying in English. If the conversation started in Arabic, keep replying in Egyptian Arabic.
 - Item names ALWAYS stay in English in both languages - that's how Egyptians actually order ("عايز Atomic Double", not "عايز أتوميك دابل").
 - When speaking Arabic, use Egyptian dialect specifically (not MSA, not Levantine). Use "عايز/عايزة" for "I want", "كام؟" for "how much", "تمام" for "okay", "يا فندم" or "يا باشا" for casual address.
-- Prices: in English say "200 EGP". In Arabic say "مية واتنين جنيه" or "٢٠٠ جنيه" depending on flow.
-- When you detect a language switch, also call the \`set_language(en|ar)\` client tool so the website UI flips to match (RTL for Arabic).
+- Only mention prices when the customer asks for a price, total, or cost. Prices are for tool use, not casual speech.
+- Do not call \`set_language\` during an active conversation. The website chooses English or Arabic before the call starts.
 
 # Menu
 
@@ -92,11 +93,12 @@ ${addOns}
 
 1. Greet warmly. Ask what they're in the mood for. If they're undecided, suggest a hero item (Atomic Double, Truffle Single, Buffalo CHKN).
 2. As items come up, call \`add_to_cart\` with the item ID, quantity, and any modifiers.
-3. Briefly confirm verbally after each add: "Added Atomic Double, 310 EGP." / "تمام، Atomic Double بـ ٣١٠ جنيه."
+3. Briefly confirm each add without price unless asked: "Added Atomic Double." / "تمام، ضفت Atomic Double."
 4. Suggest natural upsells once per order - fries with a burger, a shake to go with - but never twice. Don't be pushy.
-5. Before submitting, call \`view_cart\`, recite the items and total, and ask for confirmation.
-6. On confirmation, collect: name, phone (Egyptian format 010/011/012/015 - eleven digits total), delivery address.
-7. Call \`submit_order\` with the collected info. Read out the order number, thank them warmly, end the call.
+5. Before submitting, call \`view_cart\`, recap item names briefly, and ask for confirmation. Mention the total only if the customer asks.
+6. On confirmation, call \`submit_order\` immediately. Do not ask for name, phone number, delivery address, or payment details in this demo.
+7. Read out the order number, thank them warmly, end the call.
+8. After the order number has been read and the customer has no final question, call \`end_call\`.
 
 # Tool usage
 
@@ -106,21 +108,25 @@ You have ACTION tools (server webhooks that mutate state) and DISPLAY tools (cli
 - \`add_to_cart(menu_item_id, quantity, modifiers?, notes?)\` - add an item
 - \`view_cart()\` - get current cart contents and EGP total
 - \`remove_from_cart(line_id)\` - remove an item by its line ID
-- \`submit_order(customer_name, phone, address, payment_method?)\` - finalize the order
+- \`submit_order()\` - finalize the confirmed demo order
 
 **Display tools (call liberally to keep visuals in sync with speech):**
 - \`show_category(category_name)\` - display a category section on screen. Call when you're discussing or about to discuss a category.
 - \`highlight_items(item_ids)\` - pulse specific item cards. Call when recommending 2-3 items.
 - \`show_item_detail(item_id)\` - open a detail panel for one item.
 - \`clear_focus()\` - return to overview. Call when changing topic.
-- \`set_language(language)\` - 'en' or 'ar'. Call IMMEDIATELY when you detect a language switch.
+- \`set_language(language)\` - 'en' or 'ar'. Only use before a conversation starts; never use it to switch language mid-call.
 
-When a tool call takes a moment to return, fill the silence with a brief filler: "Let me check that..." / "خليني أشوف..." / "One sec..."
+**Built-in tools:**
+- \`end_call\` - end the conversation after a completed order, when the customer says goodbye, or when the user clearly says they are done. Do not use it while an order is incomplete unless the customer explicitly wants to stop.
+
+When a tool call takes a moment, say only a tiny filler if needed: "One sec..."
 
 # Conversation style
 
-- Casual, energetic, brief. You're a burger guy, not a sommelier.
-- 1-2 short sentences per turn typically. Don't lecture.
+- Casual, energetic, brief. Keep most turns under 12 words.
+- Do not over-explain. Ask one question at a time.
+- Do not mention item prices or cart total unless the customer asks.
 - Confirm actions before they're irreversible (\`submit_order\` especially).
 - Don't read item IDs out loud - those are internal.
 - If the user is silent, prompt gently once, then wait. Don't keep filling silence.
@@ -179,7 +185,7 @@ const addToCartFlat = {
 
 const viewCartFlat = {
   name: "view_cart",
-  description: "Return the current cart contents and total. Call before reciting the order to the customer.",
+  description: "Return the current cart contents. Use totals silently unless the customer asks for price or total.",
   type: "webhook",
   method: "POST",
   url: "{{BACKEND_URL}}/api/tools/view-cart",
@@ -211,7 +217,7 @@ const removeFromCartFlat = {
 const submitOrderFlat = {
   name: "submit_order",
   description:
-    "Finalize the order. Only call AFTER confirming the cart contents and total with the customer, and AFTER collecting their name, phone, and delivery address. Returns an order number.",
+    "Finalize the demo order after the customer confirms the items. Do not collect name, phone, address, or payment details. Do not mention prices unless asked. Returns an order number.",
   type: "webhook",
   method: "POST",
   url: "{{BACKEND_URL}}/api/tools/submit-order",
@@ -219,19 +225,8 @@ const submitOrderFlat = {
     type: "object",
     properties: {
       conversation_id: { type: "string" },
-      customer_name: { type: "string" },
-      phone: {
-        type: "string",
-        description: "Egyptian phone, 11 digits starting with 010, 011, 012, or 015",
-      },
-      address: { type: "string" },
-      payment_method: {
-        type: "string",
-        enum: ["cash", "card", "online"],
-        default: "cash",
-      },
     },
-    required: ["conversation_id", "customer_name", "phone", "address"],
+    required: ["conversation_id"],
   },
 };
 
@@ -282,7 +277,7 @@ const clientTools = [
   {
     type: "client",
     name: "set_language",
-    description: "Switch the UI language and text direction. Call immediately when you detect the user switching language.",
+    description: "Set the UI language and text direction before a call starts. Do not call during an active conversation.",
     parameters: {
       type: "object",
       properties: {
@@ -315,21 +310,48 @@ const agentConfig = {
   template: "customer-service",
   conversation_config: {
     agent: {
-      first_message:
-        "Hey, welcome to BRGR! What can I get started for you today? You can also talk to me in Arabic - أهلاً، إيه اللي تحب تطلبه النهارده؟",
-      language: "auto",
+      first_message: "Hey, welcome to BRGR! What can I get started for you today?",
+      language: "en",
+      disable_first_message_interruptions: true,
       prompt: {
         prompt: systemPrompt,
         llm: "claude-sonnet-4-6",
         temperature: 0.5,
         tools: [...webhookTools.map(webhookForAgent), ...clientTools],
+        built_in_tools: {
+          end_call: {
+            name: "end_call",
+            type: "system",
+            params: {
+              system_tool_type: "end_call",
+            },
+            description:
+              "End the call after a completed order, after the customer says goodbye, or when the customer clearly says they are done.",
+          },
+        },
       },
     },
     tts: {
-      model_id: "eleven_turbo_v2_5",
-      voice_id: "{{VOICE_ID}}",
+      model_id: "eleven_turbo_v2",
+      voice_id: "JBFqnCBsd6RMkjVDRZzb",
       stability: 0.4,
       similarity_boost: 0.75,
+    },
+    conversation: {
+      client_events: ["audio", "user_transcript", "agent_response"],
+    },
+    language_presets: {
+      ar: {
+        overrides: {
+          agent: {
+            first_message: "أهلاً، إيه اللي تحب تطلبه النهارده؟",
+          },
+          tts: {
+            model_id: "eleven_turbo_v2_5",
+            voice_id: "{{VOICE_ID}}",
+          },
+        },
+      },
     },
     vad: {
       type: "server_vad",

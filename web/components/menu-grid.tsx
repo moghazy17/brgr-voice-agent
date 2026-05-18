@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef } from "react";
 import { ChevronRight } from "lucide-react";
 import { clsx } from "clsx";
 import { copy } from "@/lib/i18n";
+import { getMenuItemImageSrc } from "@/lib/menu-images";
 import { formatPrice, getCategoryLabel, normalizeDisplayName } from "@/lib/menu-data";
 import type { Language, MenuCategory, MenuItem } from "@/lib/types";
 
@@ -33,7 +34,26 @@ export function MenuGrid({
       return;
     }
 
-    sectionRefs.current[activeCategory]?.scrollIntoView({ block: "start", behavior: "smooth" });
+    const target =
+      sectionRefs.current[activeCategory] ??
+      sectionRefs.current[
+        Object.keys(sectionRefs.current).find(
+          (categoryName) => categoryName.toLowerCase() === activeCategory.toLowerCase(),
+        ) ?? ""
+      ];
+
+    if (!target) {
+      return;
+    }
+
+    const frame = window.requestAnimationFrame(() => {
+      const stickyOffset = window.innerWidth >= 768 ? 170 : 145;
+      const top = target.getBoundingClientRect().top + window.scrollY - stickyOffset;
+
+      window.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+    });
+
+    return () => window.cancelAnimationFrame(frame);
   }, [activeCategory]);
 
   return (
@@ -62,9 +82,9 @@ export function MenuGrid({
         ) : null}
       </div>
 
-      <div className="sticky top-[72px] z-20 -mx-4 mb-6 border-y-[3px] border-brgr-ink bg-brgr-cream/95 backdrop-blur sm:-mx-6 lg:-mx-8">
+      <div className="sticky top-[72px] z-10 -mx-4 mb-6 border-y-[3px] border-brgr-ink bg-brgr-cream/95 backdrop-blur sm:-mx-6 lg:-mx-8">
         <div className="menu-chip-fade relative">
-          <div className="menu-scrollbar flex gap-2 overflow-x-auto px-4 py-3 sm:px-6 md:flex-wrap md:overflow-visible lg:px-8">
+          <div className="menu-scrollbar flex gap-2 overflow-x-auto px-4 py-2 sm:px-6 md:flex-wrap md:overflow-visible lg:px-8">
             {categories.map((category) => {
               const isActive = activeCategory === category.name_en;
 
@@ -75,14 +95,14 @@ export function MenuGrid({
                   onClick={() => onCategorySelect(isActive ? null : category.name_en)}
                   aria-pressed={isActive}
                   className={clsx(
-                    "btn-diner h-11 shrink-0 px-4 text-xs uppercase tracking-[0.14em]",
+                    "btn-diner h-9 shrink-0 px-3 text-[11px] uppercase tracking-[0.12em]",
                     isActive && "is-active",
                   )}
                 >
                   {getCategoryLabel(category, language)}
                   <span
                     aria-hidden
-                    className="ms-2 inline-block rounded-full border-2 border-current px-1.5 text-[10px] font-black leading-tight opacity-70"
+                    className="ms-1.5 inline-block rounded-full border-2 border-current px-1.5 text-[9px] font-black leading-tight opacity-70"
                   >
                     {category.item_count}
                   </span>
@@ -157,6 +177,9 @@ function ItemCard({
   muted: boolean;
   onSelect: () => void;
 }) {
+  const displayName = normalizeDisplayName(item.name);
+  const imageSrc = getMenuItemImageSrc(item.name);
+
   return (
     <button
       type="button"
@@ -167,9 +190,20 @@ function ItemCard({
         muted && "pointer-events-none is-muted",
       )}
     >
+      {imageSrc ? (
+        <div className="mb-4 grid aspect-[5/4] place-items-center overflow-hidden rounded-[14px] border-2 border-brgr-ink bg-white">
+          <img
+            src={imageSrc}
+            alt={displayName}
+            className="h-full w-full object-contain p-3 transition duration-300 group-hover:scale-105"
+            loading="lazy"
+          />
+        </div>
+      ) : null}
+
       <div className="flex items-start justify-between gap-3">
         <h3 className="min-w-0 font-display text-xl leading-tight tracking-tight text-brgr-ink">
-          {normalizeDisplayName(item.name)}
+          {displayName}
         </h3>
         <ChevronRight className="mt-1 h-4 w-4 shrink-0 text-brgr-muted transition group-hover:text-brgr-red rtl:rotate-180" />
       </div>

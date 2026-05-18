@@ -22,6 +22,7 @@ type BrgrStore = {
   clearCart: () => void;
   setAgentStatus: (status: AgentStatus) => void;
   addTranscript: (message: Omit<TranscriptMessage, "id" | "timestamp"> & Partial<Pick<TranscriptMessage, "timestamp">>) => void;
+  clearTranscript: () => void;
   setConversationId: (conversationId: string | null) => void;
   setCartSyncError: (error: string | null) => void;
   setAgentError: (error: string | null) => void;
@@ -106,6 +107,7 @@ export const useBrgrStore = create<BrgrStore>((set) => ({
         },
       ],
     })),
+  clearTranscript: () => set({ transcript: [] }),
   setConversationId: (conversationId) => set({ conversationId }),
   setCartSyncError: (cartSyncError) => set({ cartSyncError }),
   setAgentError: (agentError) => set({ agentError }),

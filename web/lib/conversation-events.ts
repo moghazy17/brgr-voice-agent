@@ -14,8 +14,16 @@ type ToolEvent = {
   raw: unknown;
 };
 
+type TranscriptEvent = {
+  role: "agent" | "user" | "tool";
+  text: string;
+  id?: string;
+};
+
 const recentOptimisticAdds = new Map<string, number>();
 const OPTIMISTIC_DEDUPE_MS = 1000;
+const recentTranscriptEvents = new Map<string, number>();
+const TRANSCRIPT_DEDUPE_MS = 1500;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -71,7 +79,7 @@ export function extractConversationId(value: unknown): string | null {
   return null;
 }
 
-function extractText(value: unknown): { role: "agent" | "user" | "tool"; text: string } | null {
+function extractText(value: unknown): TranscriptEvent | null {
   if (!isRecord(value)) {
     return null;
   }
@@ -87,6 +95,67 @@ function extractText(value: unknown): { role: "agent" | "user" | "tool"; text: s
   const role = source.includes("user") ? "user" : source.includes("tool") ? "tool" : "agent";
 
   return { role, text };
+}
+
+function extractTranscriptEvents(value: unknown): TranscriptEvent[] {
+  const events: TranscriptEvent[] = [];
+  const seen = new Set<unknown>();
+  const stack: unknown[] = [value];
+
+  while (stack.length) {
+    const current = stack.pop();
+
+    if (!isRecord(current) || seen.has(current)) {
+      continue;
+    }
+
+    seen.add(current);
+
+    if (isRecord(current.user_transcription_event)) {
+      const text = current.user_transcription_event.user_transcript;
+      if (typeof text === "string" && text.trim()) {
+        events.push({ role: "user", text: text.trim(), id: getEventId(current) ?? undefined });
+      }
+    }
+
+    if (isRecord(current.agent_response_event)) {
+      const text = current.agent_response_event.agent_response;
+      if (typeof text === "string" && text.trim()) {
+        events.push({ role: "agent", text: text.trim(), id: getEventId(current) ?? undefined });
+      }
+    }
+
+    const directText = extractText(current);
+    if (directText) {
+      events.push({ ...directText, id: getEventId(current) ?? undefined });
+    }
+
+    for (const child of Object.values(current)) {
+      if (typeof child === "object" && child !== null) {
+        stack.push(child);
+      }
+    }
+  }
+
+  return events;
+}
+
+function shouldAddTranscript(event: TranscriptEvent): boolean {
+  const now = Date.now();
+  recentTranscriptEvents.forEach((timestamp, key) => {
+    if (now - timestamp > TRANSCRIPT_DEDUPE_MS) {
+      recentTranscriptEvents.delete(key);
+    }
+  });
+
+  const key = event.id ?? `${event.role}:${event.text}`;
+  const previous = recentTranscriptEvents.get(key);
+  if (previous && now - previous <= TRANSCRIPT_DEDUPE_MS) {
+    return false;
+  }
+
+  recentTranscriptEvents.set(key, now);
+  return true;
 }
 
 function normalizeToolName(value: unknown): string | null {
@@ -452,8 +521,12 @@ export function handleConversationMessage(message: unknown): void {
     store.setConversationId(conversationId);
   }
 
-  const transcript = extractText(message);
-  if (transcript) {
+  const transcriptEvents = extractTranscriptEvents(message);
+  for (const transcript of transcriptEvents) {
+    if (!shouldAddTranscript(transcript)) {
+      continue;
+    }
+
     store.addTranscript(transcript);
     if (transcript.role === "agent") {
       mirrorTranscriptAdd(transcript.text);

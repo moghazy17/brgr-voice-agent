@@ -62,8 +62,13 @@ export function useRegisterClientTools(): void {
   });
 
   useConversationClientTool("set_language", async (args: ToolArgs) => {
+    const store = useBrgrStore.getState();
+    if (store.agentStatus !== "idle") {
+      return "Language cannot be changed during an active conversation.";
+    }
+
     const language = asLanguage(args.language);
-    useBrgrStore.getState().setLanguage(language);
+    store.setLanguage(language);
 
     document.documentElement.lang = language;
     document.documentElement.dir = language === "ar" ? "rtl" : "ltr";
